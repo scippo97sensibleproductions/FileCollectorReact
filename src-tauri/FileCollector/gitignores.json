@@ -1,0 +1,834 @@
+[
+  {
+    "originalPattern": ".vs/",
+    "isNegated": false,
+    "isDirectoryOnly": true,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\.vs(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 2
+  },
+  {
+    "originalPattern": ".idea/",
+    "isNegated": false,
+    "isDirectoryOnly": true,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\.idea(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 3
+  },
+  {
+    "originalPattern": "*.suo",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.suo(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 4
+  },
+  {
+    "originalPattern": "*.user",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.user(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 5
+  },
+  {
+    "originalPattern": "*.userosscache",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.userosscache(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 6
+  },
+  {
+    "originalPattern": "*.sln.docstates",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.sln\\.docstates(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 7
+  },
+  {
+    "originalPattern": "[Bb]in/",
+    "isNegated": false,
+    "isDirectoryOnly": true,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\[Bb\\]in(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 10
+  },
+  {
+    "originalPattern": "[Oo]bj/",
+    "isNegated": false,
+    "isDirectoryOnly": true,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\[Oo\\]bj(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 11
+  },
+  {
+    "originalPattern": "publish/",
+    "isNegated": false,
+    "isDirectoryOnly": true,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)publish(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 12
+  },
+  {
+    "originalPattern": "publish_final/",
+    "isNegated": false,
+    "isDirectoryOnly": true,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)publish_final(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 13
+  },
+  {
+    "originalPattern": "release/",
+    "isNegated": false,
+    "isDirectoryOnly": true,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)release(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 14
+  },
+  {
+    "originalPattern": "releases/",
+    "isNegated": false,
+    "isDirectoryOnly": true,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)releases(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 15
+  },
+  {
+    "originalPattern": "*.nupkg",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.nupkg(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 18
+  },
+  {
+    "originalPattern": "*.snupkg",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.snupkg(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 19
+  },
+  {
+    "originalPattern": "[Pp]ackages/",
+    "isNegated": false,
+    "isDirectoryOnly": true,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\[Pp\\]ackages(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 20
+  },
+  {
+    "originalPattern": "*~*.cs",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*~[^/]*\\.cs(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 21
+  },
+  {
+    "originalPattern": "/.idea",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "^\\/\\.idea(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 24
+  },
+  {
+    "originalPattern": "*.iml",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.iml(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 25
+  },
+  {
+    "originalPattern": "*.csproj.user",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.csproj\\.user(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 28
+  },
+  {
+    "originalPattern": "appsettings.Development.json",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)appsettings\\.Development\\.json(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 29
+  },
+  {
+    "originalPattern": "appsettings.*.json",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)appsettings\\.[^/]*\\.json(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 30
+  },
+  {
+    "originalPattern": "!appsettings.json",
+    "isNegated": true,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)appsettings\\.json(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 31
+  },
+  {
+    "originalPattern": "*.log",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.log(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 34
+  },
+  {
+    "originalPattern": "*.log.*",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.log\\.[^/]*(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 35
+  },
+  {
+    "originalPattern": "*.tmp",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.tmp(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 38
+  },
+  {
+    "originalPattern": "*.bak",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.bak(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 39
+  },
+  {
+    "originalPattern": "*.orig",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.orig(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 40
+  },
+  {
+    "originalPattern": ".DS_Store",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\.DS_Store(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 43
+  },
+  {
+    "originalPattern": ".DS_Store?",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\.DS_Store[^/](?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 44
+  },
+  {
+    "originalPattern": "._*",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\._[^/]*(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 45
+  },
+  {
+    "originalPattern": ".Spotlight-V100",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\.Spotlight-V100(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 46
+  },
+  {
+    "originalPattern": ".Trashes",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\.Trashes(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 47
+  },
+  {
+    "originalPattern": "ehthumbs.db",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)ehthumbs\\.db(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 48
+  },
+  {
+    "originalPattern": "Thumbs.db",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)Thumbs\\.db(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 49
+  },
+  {
+    "originalPattern": ".env",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\.env(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 52
+  },
+  {
+    "originalPattern": ".env.*",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\.env\\.[^/]*(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 53
+  },
+  {
+    "originalPattern": "!.env.example",
+    "isNegated": true,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\.env\\.example(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 54
+  },
+  {
+    "originalPattern": "*.pdb",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.pdb(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 57
+  },
+  {
+    "originalPattern": "*.exe",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.exe(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 58
+  },
+  {
+    "originalPattern": "*.dll",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.dll(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 59
+  },
+  {
+    "originalPattern": "*.dylib",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.dylib(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 60
+  },
+  {
+    "originalPattern": "*.so",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)[^/]*\\.so(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 61
+  },
+  {
+    "originalPattern": "node_modules/",
+    "isNegated": false,
+    "isDirectoryOnly": true,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)node_modules(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 64
+  },
+  {
+    "originalPattern": "npm-debug.log*",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)npm-debug\\.log[^/]*(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 65
+  },
+  {
+    "originalPattern": "yarn-debug.log*",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)yarn-debug\\.log[^/]*(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 66
+  },
+  {
+    "originalPattern": "yarn-error.log*",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)yarn-error\\.log[^/]*(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 67
+  },
+  {
+    "originalPattern": "package-lock.json",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)package-lock\\.json(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 68
+  },
+  {
+    "originalPattern": "yarn.lock",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)yarn\\.lock(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\FileCollector\\.gitignore",
+    "lineNumber": 69
+  },
+  {
+    "originalPattern": ".vs",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\.vs(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 1
+  },
+  {
+    "originalPattern": "/ISPPiattaformaUnica.CommonLibrary/bin/Debug/net8.0",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "^\\/ISPPiattaformaUnica\\.CommonLibrary\\/bin\\/Debug\\/net8\\.0(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 2
+  },
+  {
+    "originalPattern": "/ISPPiattaformaUnica.CommonLibrary/obj",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "^\\/ISPPiattaformaUnica\\.CommonLibrary\\/obj(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 3
+  },
+  {
+    "originalPattern": "/BackEnd/ISPPiattaformaUnica.CommonLibrary/obj",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "^\\/BackEnd\\/ISPPiattaformaUnica\\.CommonLibrary\\/obj(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 4
+  },
+  {
+    "originalPattern": "/BackEnd/ISPPiattaformaUnica.CommonLibrary/bin/Debug/net8.0",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "^\\/BackEnd\\/ISPPiattaformaUnica\\.CommonLibrary\\/bin\\/Debug\\/net8\\.0(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 5
+  },
+  {
+    "originalPattern": ".idea",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\.idea(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 7
+  },
+  {
+    "originalPattern": ".vscode",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\.vscode(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 8
+  },
+  {
+    "originalPattern": ".editorconfig",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)\\.editorconfig(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 9
+  },
+  {
+    "originalPattern": "/FrontEnd/pnpm-lock.yaml",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "^\\/FrontEnd\\/pnpm-lock\\.yaml(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 14
+  },
+  {
+    "originalPattern": "FrontEnd/apps/admin/tsconfig.tsbuildinfo",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "^FrontEnd\\/apps\\/admin\\/tsconfig\\.tsbuildinfo(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 15
+  },
+  {
+    "originalPattern": "FrontEnd/apps/user/tsconfig.tsbuildinfo",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "^FrontEnd\\/apps\\/user\\/tsconfig\\.tsbuildinfo(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 16
+  },
+  {
+    "originalPattern": "/BackEnd/ISPPiattaformaUnica.CommonLibrary/bin/Release/net8.0",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "^\\/BackEnd\\/ISPPiattaformaUnica\\.CommonLibrary\\/bin\\/Release\\/net8\\.0(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 17
+  },
+  {
+    "originalPattern": "/BackEnd/ISPPiattaformaUnica.WebApi.Admin/Properties/PublishProfiles",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "^\\/BackEnd\\/ISPPiattaformaUnica\\.WebApi\\.Admin\\/Properties\\/PublishProfiles(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 18
+  },
+  {
+    "originalPattern": "BackEnd/ISPPiattaformaUnica.WebApi.Admin/Log/ispic/*.*",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "^BackEnd\\/ISPPiattaformaUnica\\.WebApi\\.Admin\\/Log\\/ispic\\/[^/]*\\.[^/]*(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 19
+  },
+  {
+    "originalPattern": "BackEnd/ISPPiattaformaUnica.WebApi.User/Log/ispic/*.*",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "^BackEnd\\/ISPPiattaformaUnica\\.WebApi\\.User\\/Log\\/ispic\\/[^/]*\\.[^/]*(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 20
+  },
+  {
+    "originalPattern": "ISPICMonoRepo.slnLaunch.user",
+    "isNegated": false,
+    "isDirectoryOnly": false,
+    "regex": {
+      "__type": "RegExp",
+      "source": "(?:^|\\/)ISPICMonoRepo\\.slnLaunch\\.user(?:$|\\/)",
+      "flags": ""
+    },
+    "basePath": "N/A",
+    "sourceFile": "C:\\Users\\Administrator\\RiderProjects\\ISPIC - Piattaforma Unica 2.0\\.gitignore",
+    "lineNumber": 21
+  }
+]

@@ -1,0 +1,3 @@
+interface GitIgnoreItem {
+    pattern: string;
+}
