@@ -13,9 +13,10 @@ import {notifications} from "@mantine/notifications";
 import type { FileInfo } from "../models/FileInfo.ts";
 import {ContentComposer} from "./ContentComposer.tsx";
 import {FileViewer} from "./FileViewer.tsx";
+import {estimateTokens} from "../helpers/TokenCounter.ts";
 
 const PROMPTS_PATH = import.meta.env.VITE_SYSTEM_PROMPTS_PATH || 'FileCollector/system_prompts.json';
-const BASE_DIR = (Number(import.meta.env.VITE_FILE_BASE_PATH) || 21) as BaseDirectory; // 21 is Home
+const BASE_DIR = (Number(import.meta.env.VITE_FILE_BASE_PATH) || 21) as BaseDirectory;
 const MAX_FILE_SIZE = 200_000;
 
 interface FileTextRendererProps {
@@ -41,7 +42,6 @@ export const FileTextRenderer = ({data, uncheckItem}: FileTextRendererProps) => 
                     setSystemPrompts(prompts);
                 }
             } catch (e) {
-                console.warn("Could not load system prompts, continuing without them.", e);
                 setSystemPrompts([]);
             }
         }
@@ -59,7 +59,7 @@ export const FileTextRenderer = ({data, uncheckItem}: FileTextRendererProps) => 
                 return;
             }
 
-            const filePromises = data.map(async (path) => {
+            const filePromises = data.map(async (path): Promise<FileInfo> => {
                 try {
                     const content = await readTextFile(path);
                     if (content.length > MAX_FILE_SIZE) {
@@ -68,7 +68,12 @@ export const FileTextRenderer = ({data, uncheckItem}: FileTextRendererProps) => 
                             error: `File is too large to display (over ${MAX_FILE_SIZE / 1000}k characters).`,
                         };
                     }
-                    return {path, content, language: getLanguage(path)};
+                    return {
+                        path,
+                        content,
+                        language: getLanguage(path),
+                        tokenCount: estimateTokens(content)
+                    };
                 } catch (e) {
                     return {
                         path,
@@ -114,7 +119,7 @@ export const FileTextRenderer = ({data, uncheckItem}: FileTextRendererProps) => 
         };
     };
 
-    const totalChars = useMemo(() => getFormattedContentAndParts().combinedText.length, [files, systemPrompts, selectedSystemPromptId, userPrompt]);
+    const totalTokens = useMemo(() => estimateTokens(getFormattedContentAndParts().combinedText), [files, systemPrompts, selectedSystemPromptId, userPrompt]);
 
 
     const handleCopyAll = async () => {
@@ -144,7 +149,6 @@ export const FileTextRenderer = ({data, uncheckItem}: FileTextRendererProps) => 
                 message: 'Could not write content to the clipboard.',
                 color: 'red',
             });
-            console.error("Failed to copy to clipboard:", e);
         }
     };
 
@@ -171,7 +175,7 @@ export const FileTextRenderer = ({data, uncheckItem}: FileTextRendererProps) => 
                     onCopyAll={handleCopyAll}
                     setUserPrompt={setUserPrompt}
                     setSelectedSystemPromptId={setSelectedSystemPromptId}
-                    totalChars={totalChars}
+                    totalTokens={totalTokens}
                 />
             </Grid.Col>
 

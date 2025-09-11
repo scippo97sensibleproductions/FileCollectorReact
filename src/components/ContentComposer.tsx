@@ -25,7 +25,7 @@ interface ContentComposerProps {
     onCopyAll: () => void;
     setUserPrompt: (prompt: string) => void;
     setSelectedSystemPromptId: (id: string | null) => void;
-    totalChars: number;
+    totalTokens: number;
 }
 
 export const ContentComposer: FC<ContentComposerProps> = ({
@@ -39,7 +39,7 @@ export const ContentComposer: FC<ContentComposerProps> = ({
                                                               onCopyAll,
                                                               setUserPrompt,
                                                               setSelectedSystemPromptId,
-                                                              totalChars
+                                                              totalTokens
                                                           }) => {
     return (
         <Paper withBorder shadow="sm" p="md" h="100%">
@@ -48,7 +48,7 @@ export const ContentComposer: FC<ContentComposerProps> = ({
                     <Title order={5}>Content Composer</Title>
                     <Group gap="xs" align="center">
                         <Text size="xs" c="dimmed">
-                            {totalChars.toLocaleString()} chars
+                            ~{totalTokens.toLocaleString()} tokens
                         </Text>
                         <Button
                             size="compact-sm"

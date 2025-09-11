@@ -3,4 +3,5 @@ export interface FileInfo {
     content?: string;
     language?: string;
     error?: string;
+    tokenCount?: number;
 }

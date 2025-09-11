@@ -31,7 +31,7 @@ export const SelectedFileList: FC<SelectedFileListProps> = ({
                         key={file.path}
                         active={selectedFile?.path === file.path}
                         label={file.path.split(/[\\/]/).pop()}
-                        description={`${file.content?.length ?? 'Error'} Chars`}
+                        description={file.error ? 'Error reading file' : `~${(file.tokenCount ?? 0).toLocaleString()} tokens`}
                         color={file.error ? 'red' : 'blue'}
                         onClick={() => onFileSelect(selectedFile?.path === file.path ? null : file)}
                         leftSection={<IconFile size="1rem" />}
