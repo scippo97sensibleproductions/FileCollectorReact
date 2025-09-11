@@ -27,7 +27,6 @@ interface FileTextRendererProps {
 export const FileTextRenderer = ({data, uncheckItem}: FileTextRendererProps) => {
     const [files, setFiles] = useState<FileInfo[]>([]);
     const [selectedFile, setSelectedFile] = useState<FileInfo | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
 
     const [systemPrompts, setSystemPrompts] = useState<SystemPromptItem[]>([]);
     const [selectedSystemPromptId, setSelectedSystemPromptId] = useState<string | null>(null);
@@ -49,54 +48,52 @@ export const FileTextRenderer = ({data, uncheckItem}: FileTextRendererProps) => 
     }, []);
 
     useEffect(() => {
-        const getFiles = async () => {
-            setIsLoading(true);
+        const syncFiles = async () => {
+            const dataPathSet = new Set(data);
 
-            if (data.length === 0) {
-                setFiles([]);
-                setSelectedFile(null);
-                setIsLoading(false);
-                return;
-            }
+            const keptFiles = files.filter(f => dataPathSet.has(f.path));
+            const currentPathSet = new Set(keptFiles.map(f => f.path));
+            const pathsToFetch = data.filter(path => !currentPathSet.has(path));
 
-            const filePromises = data.map(async (path): Promise<FileInfo> => {
-                try {
-                    const content = await readTextFile(path);
-                    if (content.length > MAX_FILE_SIZE) {
+            let newFiles: FileInfo[] = [];
+            if (pathsToFetch.length > 0) {
+                const filePromises = pathsToFetch.map(async (path): Promise<FileInfo> => {
+                    try {
+                        const content = await readTextFile(path);
+                        if (content.length > MAX_FILE_SIZE) {
+                            return {
+                                path,
+                                error: `File is too large to display (over ${MAX_FILE_SIZE / 1000}k characters).`,
+                            };
+                        }
                         return {
                             path,
-                            error: `File is too large to display (over ${MAX_FILE_SIZE / 1000}k characters).`,
+                            content,
+                            language: getLanguage(path),
+                            tokenCount: estimateTokens(content)
+                        };
+                    } catch (e) {
+                        return {
+                            path,
+                            error: `Failed to read file: ${e instanceof Error ? e.message : String(e)}`,
                         };
                     }
-                    return {
-                        path,
-                        content,
-                        language: getLanguage(path),
-                        tokenCount: estimateTokens(content)
-                    };
-                } catch (e) {
-                    return {
-                        path,
-                        error: `Failed to read file: ${e instanceof Error ? e.message : String(e)}`,
-                    };
-                }
-            });
+                });
+                newFiles = await Promise.all(filePromises);
+            }
 
-            const filesWithInfo = await Promise.all(filePromises);
+            const updatedFiles = [...keptFiles, ...newFiles];
+            updatedFiles.sort((a, b) => (b.content?.length ?? -1) - (a.content?.length ?? -1));
+            setFiles(updatedFiles);
 
-            filesWithInfo.sort((a, b) => (b.content?.length ?? -1) - (a.content?.length ?? -1));
-
-            setFiles(filesWithInfo);
-
-            const currentSelectedPath = selectedFile?.path;
-            const newSelection = filesWithInfo.find(f => f.path === currentSelectedPath) || filesWithInfo[0] || null;
-            setSelectedFile(newSelection);
-
-            setIsLoading(false);
+            const selectedFileExists = selectedFile && dataPathSet.has(selectedFile.path);
+            if (!selectedFileExists) {
+                setSelectedFile(updatedFiles[0] || null);
+            }
         };
 
-        getFiles();
-    }, [data, selectedFile?.path]);
+        syncFiles();
+    }, [data]);
 
     const getFormattedContentAndParts = () => {
         const filesToCopy = files.filter(file => file.content && !file.error);
@@ -153,7 +150,7 @@ export const FileTextRenderer = ({data, uncheckItem}: FileTextRendererProps) => 
     };
 
 
-    if (isLoading && data.length > 0) {
+    if (data.length > 0 && files.length === 0) {
         return <Center h="100%"><Loader/></Center>;
     }
 
