@@ -1,92 +1,63 @@
-/**
- * Converts a gitignore pattern string into a regular expression.
- * This function is the heart of the gitignore logic.
- *
- * @param pattern The gitignore pattern string.
- * @returns A RegExp object that implements the pattern's matching rules.
- */
-function patternToRegex(pattern: string): RegExp {
-    // A slash "/" is used as the directory separator.
-    // Let's create the regex string part by part.
-    let regexString = pattern
-        // 1. Escape special RegExp characters, except for '*', '?', and '\'.
-        .replace(/[.+^${}()|[\]]/g, '\\$&')
-        // 2. Handle escaped characters from gitignore spec.
-        // \! -> !, \# -> #, etc.
-        .replace(/\\([!#*? ])/g, '$1')
-        // 3. Convert gitignore wildcards to RegExp wildcards.
-        // An asterisk "*" matches anything except a slash.
-        .replace(/\*/g, '[^/]*')
-        // The character "?" matches any one character except "/".
-        .replace(/\?/g, '[^/]');
+const escapeRegexChars = (str: string): string =>
+    str.replace(/[.+^${}()|[\]]/g, '\\$&');
 
-    // 4. Handle double-asterisk "**" special cases.
-    if (regexString.startsWith('**/')) {
-        // A leading "**" followed by a slash means match in all directories.
-        // e.g., "**/foo" is equivalent to "foo". We achieve this by allowing
-        // the pattern to be preceded by anything or nothing, including directories.
-        regexString = '(?:.*/)?' + regexString.substring(3);
+const unescapeGitignoreSpecialChars = (str: string): string =>
+    str.replace(/\\([!#*? ])/g, '$1');
+
+const convertGitignoreWildcards = (str: string): string =>
+    str.replace(/\*/g, '[^/]*').replace(/\?/g, '[^/]');
+
+const handleDoubleAsterisk = (str: string): string => {
+    let result = str;
+    if (result.startsWith('**/')) {
+        result = `(?:.*/)?${result.substring(3)}`;
     }
+    result = result.replace(/\/\*\*(\/|$)/g, '(?:/.*)*$1');
+    result = result.replace(/\/(\*\*)$/, '(?:/.*)?');
+    return result;
+};
 
-    // A slash followed by "**" then a slash matches zero or more directories.
-    // e.g., "a/**/b"
-    regexString = regexString.replace(/\/\*\*(\/|$)/g, '(?:/.+)*$1');
-
-    // A trailing "/**" matches everything inside.
-    // e.g., "abc/**" -> we want to match "abc" and everything after it.
-    regexString = regexString.replace(/\/$/g, '/**').replace(/\/(\*\*)$/, '(?:/.*)?');
-
-    // 5. Handle anchoring based on the presence of a slash.
-    // If there is a separator at the beginning or middle, the pattern is
-    // relative to the directory level of the particular .gitignore file.
-    // Since we are checking against a full path, this means it's anchored
-    // to the start of the path.
+const applyAnchoring = (pattern: string, regexString: string): string => {
     if (pattern.includes('/') && !pattern.startsWith('**/')) {
-        regexString = '^' + regexString;
-    } else {
-        // Otherwise, the pattern can match at any level.
-        // It must match from the start of the string or after a slash.
-        regexString = '(?:^|/)' + regexString;
+        return `^${regexString}`;
     }
+    return `(?:^|/)${regexString}`;
+};
 
-    // 6. Handle directory-only patterns.
-    // If there is a separator at the end, the pattern will only match directories.
+const finalizePatternMatching = (pattern: string, regexString: string): string => {
     if (pattern.endsWith('/')) {
-        // It must match the path as a directory (ending with a slash or being the full path).
-        regexString += '$';
-    } else {
-        // Otherwise, it can match a file or a directory.
-        // So, it must match the full path, or the path as a directory prefix.
-        regexString += '(?:/.*)?$';
+        return `${regexString.slice(0, -1)}($|/.*)`;
     }
+    return `${regexString}($|/.*)`;
+};
 
-    return new RegExp(regexString);
-}
+const patternToRegex = (pattern: string): RegExp => {
+    const pipeline = [
+        escapeRegexChars,
+        unescapeGitignoreSpecialChars,
+        convertGitignoreWildcards,
+        handleDoubleAsterisk,
+        (s: string) => applyAnchoring(pattern, s),
+        (s: string) => finalizePatternMatching(pattern, s),
+    ];
 
+    const finalRegexString = pipeline.reduce((acc, fn) => fn(acc), pattern);
 
-/**
- * Processes a raw GitIgnoreItem into a structured ProcessedPattern object.
- * This filters out comments and blank lines and prepares the regex.
- *
- * @param item The GitIgnoreItem to process.
- * @returns A ProcessedPattern object, or null if the line is a comment or blank.
- */
-export function processPattern(item: GitIgnoreItem): ProcessedPattern | null {
+    return new RegExp(finalRegexString);
+};
+
+export const processPattern = (item: GitIgnoreItem): ProcessedPattern | null => {
     let pattern = item.pattern.trim();
 
-    // A blank line matches no files.
-    // A line starting with # serves as a comment.
     if (pattern === '' || pattern.startsWith('#')) {
         return null;
     }
 
-    // An optional prefix "!" which negates the pattern.
     const isNegated = pattern.startsWith('!');
     if (isNegated) {
         pattern = pattern.substring(1);
     }
 
-    // Handle escaped leading "!"
     if (pattern.startsWith('\\!')) {
         pattern = pattern.substring(1);
     }
@@ -99,9 +70,9 @@ export function processPattern(item: GitIgnoreItem): ProcessedPattern | null {
         isNegated: isNegated,
         regex: regex,
     };
-}
+};
 
-function findLastMatch(path: string, patterns: ProcessedPattern[]): ProcessedPattern | null {
+const findLastMatch = (path: string, patterns: ProcessedPattern[]): ProcessedPattern | null => {
     let lastMatch: ProcessedPattern | null = null;
     for (const p of patterns) {
         if (p.regex.test(path)) {
@@ -109,9 +80,25 @@ function findLastMatch(path: string, patterns: ProcessedPattern[]): ProcessedPat
         }
     }
     return lastMatch;
+};
+
+const isNegatedButParentIsIgnored = (path: string, patterns: ProcessedPattern[]): boolean => {
+    let parent = path;
+    while (parent.includes('/')) {
+        parent = parent.substring(0, parent.lastIndexOf('/'));
+        if (parent === '') break;
+
+        const parentDirectoryPath = `${parent}/`;
+        const parentMatch = findLastMatch(parentDirectoryPath, patterns);
+
+        if (parentMatch && !parentMatch.isNegated) {
+            return true;
+        }
+    }
+    return false;
 }
 
-export function checkIgnore(processedPatterns: ProcessedPattern[], fullPath: string): boolean {
+export const checkIgnore = (processedPatterns: ProcessedPattern[], fullPath: string): boolean => {
     const targetMatch = findLastMatch(fullPath, processedPatterns);
 
     if (!targetMatch) {
@@ -119,25 +106,13 @@ export function checkIgnore(processedPatterns: ProcessedPattern[], fullPath: str
     }
 
     if (targetMatch.isNegated) {
-        let parent = fullPath;
-        while (parent.includes('/')) {
-            parent = parent.substring(0, parent.lastIndexOf('/'));
-            if (parent === '') break;
-
-            const parentDirectoryPath = parent + '/';
-            const parentMatch = findLastMatch(parentDirectoryPath, processedPatterns);
-
-            if (parentMatch && !parentMatch.isNegated) {
-                return true;
-            }
-        }
-        return false;
+        return isNegatedButParentIsIgnored(fullPath, processedPatterns);
     }
 
     return true;
-}
+};
 
-export function shouldIgnore(items: GitIgnoreItem[], fullPath: string): boolean {
-    const patterns = items.map(processPattern).filter(Boolean) as ProcessedPattern[];
+export const shouldIgnore = (items: GitIgnoreItem[], fullPath: string): boolean => {
+    const patterns = items.map(processPattern).filter((p): p is ProcessedPattern => p !== null);
     return checkIgnore(patterns, fullPath);
-}
+};

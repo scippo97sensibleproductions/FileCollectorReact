@@ -1,16 +1,16 @@
 import {
-    Grid,
+    Flex,
     Center,
     Loader,
-    Text,
+    Text, Stack,
 } from "@mantine/core";
 import {useEffect, useMemo, useState} from "react";
 import {BaseDirectory, readTextFile} from "@tauri-apps/plugin-fs";
-import {IconCheck} from '@tabler/icons-react';
+import {IconCheck, IconInfoCircle} from '@tabler/icons-react';
 import {getLanguage} from "../helpers/fileTypeManager.ts";
-import { writeText } from '@tauri-apps/plugin-clipboard-manager';
+import {writeText} from '@tauri-apps/plugin-clipboard-manager';
 import {notifications} from "@mantine/notifications";
-import type { FileInfo } from "../models/FileInfo.ts";
+import type {FileInfo} from "../models/FileInfo.ts";
 import {ContentComposer} from "./ContentComposer.tsx";
 import {FileViewer} from "./FileViewer.tsx";
 import {estimateTokens} from "../helpers/TokenCounter.ts";
@@ -27,15 +27,19 @@ interface FileTextRendererProps {
 export const FileTextRenderer = ({data, uncheckItem}: FileTextRendererProps) => {
     const [files, setFiles] = useState<FileInfo[]>([]);
     const [selectedFile, setSelectedFile] = useState<FileInfo | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     const [systemPrompts, setSystemPrompts] = useState<SystemPromptItem[]>([]);
     const [selectedSystemPromptId, setSelectedSystemPromptId] = useState<string | null>(null);
     const [userPrompt, setUserPrompt] = useState('');
+    const [reloadNonce, setReloadNonce] = useState(0);
+
+    const handleReloadContent = () => setReloadNonce(n => n + 1);
 
     useEffect(() => {
         const getSystemPrompts = async () => {
             try {
-                const content = await readTextFile(PROMPTS_PATH, { baseDir: BASE_DIR });
+                const content = await readTextFile(PROMPTS_PATH, {baseDir: BASE_DIR});
                 const prompts = content ? JSON.parse(content) : [];
                 if (Array.isArray(prompts)) {
                     setSystemPrompts(prompts);
@@ -49,53 +53,53 @@ export const FileTextRenderer = ({data, uncheckItem}: FileTextRendererProps) => 
 
     useEffect(() => {
         const syncFiles = async () => {
+            if (data.length === 0) {
+                setFiles([]);
+                setSelectedFile(null);
+                setIsLoading(false);
+                return;
+            }
+
+            setIsLoading(true);
             const dataPathSet = new Set(data);
 
-            const keptFiles = files.filter(f => dataPathSet.has(f.path));
-            const currentPathSet = new Set(keptFiles.map(f => f.path));
-            const pathsToFetch = data.filter(path => !currentPathSet.has(path));
-
-            let newFiles: FileInfo[] = [];
-            if (pathsToFetch.length > 0) {
-                const filePromises = pathsToFetch.map(async (path): Promise<FileInfo> => {
-                    try {
-                        const content = await readTextFile(path);
-                        if (content.length > MAX_FILE_SIZE) {
-                            return {
-                                path,
-                                error: `File is too large to display (over ${MAX_FILE_SIZE / 1000}k characters).`,
-                            };
-                        }
+            const filePromises = data.map(async (path): Promise<FileInfo> => {
+                try {
+                    const content = await readTextFile(path);
+                    if (content.length > MAX_FILE_SIZE) {
                         return {
                             path,
-                            content,
-                            language: getLanguage(path),
-                            tokenCount: estimateTokens(content)
-                        };
-                    } catch (e) {
-                        return {
-                            path,
-                            error: `Failed to read file: ${e instanceof Error ? e.message : String(e)}`,
+                            error: `File is too large to display (over ${MAX_FILE_SIZE / 1000}k characters).`,
                         };
                     }
-                });
-                newFiles = await Promise.all(filePromises);
-            }
+                    return {
+                        path,
+                        content,
+                        language: getLanguage(path),
+                        tokenCount: estimateTokens(content)
+                    };
+                } catch (e) {
+                    return {
+                        path,
+                        error: `Failed to read file: ${e instanceof Error ? e.message : String(e)}`,
+                    };
+                }
+            });
 
-            const updatedFiles = [...keptFiles, ...newFiles];
-            updatedFiles.sort((a, b) => (b.content?.length ?? -1) - (a.content?.length ?? -1));
-            setFiles(updatedFiles);
+            const newFiles = await Promise.all(filePromises);
+            newFiles.sort((a, b) => (b.tokenCount ?? 0) - (a.tokenCount ?? 0));
+            setFiles(newFiles);
 
-            const selectedFileExists = selectedFile && dataPathSet.has(selectedFile.path);
-            if (!selectedFileExists) {
-                setSelectedFile(updatedFiles[0] || null);
+            if (!selectedFile || !dataPathSet.has(selectedFile.path)) {
+                setSelectedFile(newFiles.find(f => !f.error) || null);
             }
+            setIsLoading(false);
         };
 
         syncFiles();
-    }, [data]);
+    }, [data, reloadNonce]);
 
-    const getFormattedContentAndParts = () => {
+    const formattedContent = useMemo(() => {
         const filesToCopy = files.filter(file => file.content && !file.error);
 
         const selectedPrompt = systemPrompts.find(p => p.id === selectedSystemPromptId);
@@ -110,35 +114,28 @@ export const FileTextRenderer = ({data, uncheckItem}: FileTextRendererProps) => 
         if (fileContent.trim()) contentParts.push(fileContent);
         if (userPrompt.trim()) contentParts.push(`USER PROMPT:\n\n${userPrompt.trim()}`);
 
-        return {
-            parts: contentParts,
-            combinedText: contentParts.join('\n\n---\n\n')
-        };
-    };
+        return contentParts.join('\n\n---\n\n');
+    }, [files, systemPrompts, selectedSystemPromptId, userPrompt]);
 
-    const totalTokens = useMemo(() => estimateTokens(getFormattedContentAndParts().combinedText), [files, systemPrompts, selectedSystemPromptId, userPrompt]);
-
+    const totalTokens = useMemo(() => estimateTokens(formattedContent), [formattedContent]);
 
     const handleCopyAll = async () => {
-        const { parts, combinedText } = getFormattedContentAndParts();
-
-        if (parts.length === 0) {
+        if (!formattedContent) {
             notifications.show({
                 title: 'No Content to Copy',
-                message: 'Select some files or write a prompt to copy.',
+                message: 'Select files or write a prompt to generate content.',
                 color: 'yellow',
             });
             return;
         }
 
         try {
-            await writeText(combinedText);
+            await writeText(formattedContent);
             notifications.show({
                 title: 'Content Copied',
-                message: `Successfully copied content to the clipboard.`,
+                message: `Successfully copied ~${totalTokens.toLocaleString()} tokens to clipboard.`,
                 color: 'green',
-                icon: <IconCheck size={18} />,
-                autoClose: 5000,
+                icon: <IconCheck size={18}/>,
             });
         } catch (e) {
             notifications.show({
@@ -149,36 +146,31 @@ export const FileTextRenderer = ({data, uncheckItem}: FileTextRendererProps) => 
         }
     };
 
+    if (data.length === 0 && !isLoading) {
+        return <Center h="100%"><Stack align="center"><IconInfoCircle size={48} stroke={1.5} color="var(--mantine-color-gray-5)"/><Text c="dimmed">Select files from the tree to begin.</Text></Stack></Center>;
+    }
 
-    if (data.length > 0 && files.length === 0) {
+    if (isLoading) {
         return <Center h="100%"><Loader/></Center>;
     }
 
-    if (files.length === 0) {
-        return <Center h="100%"><Text c="dimmed">Select one or more files to view their content.</Text></Center>;
-    }
-
     return (
-        <Grid gutter="md">
-            <Grid.Col span={{base: 12, md: 4, lg: 3}}>
-                <ContentComposer
-                    files={files}
-                    systemPrompts={systemPrompts}
-                    selectedFile={selectedFile}
-                    userPrompt={userPrompt}
-                    selectedSystemPromptId={selectedSystemPromptId}
-                    onFileSelect={setSelectedFile}
-                    onUncheckItem={uncheckItem}
-                    onCopyAll={handleCopyAll}
-                    setUserPrompt={setUserPrompt}
-                    setSelectedSystemPromptId={setSelectedSystemPromptId}
-                    totalTokens={totalTokens}
-                />
-            </Grid.Col>
-
-            <Grid.Col span={{base: 12, md: 8, lg: 9}}>
-                <FileViewer selectedFile={selectedFile} />
-            </Grid.Col>
-        </Grid>
+        <Flex gap="md" h="100%">
+            <ContentComposer
+                files={files}
+                systemPrompts={systemPrompts}
+                selectedFile={selectedFile}
+                userPrompt={userPrompt}
+                selectedSystemPromptId={selectedSystemPromptId}
+                onFileSelect={setSelectedFile}
+                onUncheckItem={uncheckItem}
+                onCopyAll={handleCopyAll}
+                onReloadContent={handleReloadContent}
+                setUserPrompt={setUserPrompt}
+                setSelectedSystemPromptId={setSelectedSystemPromptId}
+                totalTokens={totalTokens}
+            />
+            <FileViewer selectedFile={selectedFile}/>
+        </Flex>
     );
 };

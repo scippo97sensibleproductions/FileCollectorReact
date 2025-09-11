@@ -1,4 +1,3 @@
-import { FC } from 'react';
 import {
     ActionIcon,
     Button,
@@ -8,11 +7,11 @@ import {
     Stack,
     Text,
     Textarea,
-    Title,
+    Title, Tooltip,
 } from '@mantine/core';
-import { IconCopy, IconX } from '@tabler/icons-react';
+import { IconCopy, IconRefresh, IconX } from '@tabler/icons-react';
 import { SelectedFileList } from './SelectedFileList';
-import {FileInfo} from "../models/FileInfo.ts";
+import type { FileInfo } from "../models/FileInfo.ts";
 
 interface ContentComposerProps {
     files: FileInfo[];
@@ -23,41 +22,50 @@ interface ContentComposerProps {
     onFileSelect: (file: FileInfo | null) => void;
     onUncheckItem: (path: string) => void;
     onCopyAll: () => void;
+    onReloadContent: () => void;
     setUserPrompt: (prompt: string) => void;
     setSelectedSystemPromptId: (id: string | null) => void;
     totalTokens: number;
 }
 
-export const ContentComposer: FC<ContentComposerProps> = ({
-                                                              files,
-                                                              systemPrompts,
-                                                              selectedFile,
-                                                              userPrompt,
-                                                              selectedSystemPromptId,
-                                                              onFileSelect,
-                                                              onUncheckItem,
-                                                              onCopyAll,
-                                                              setUserPrompt,
-                                                              setSelectedSystemPromptId,
-                                                              totalTokens
-                                                          }) => {
+export const ContentComposer = ({
+                                    files,
+                                    systemPrompts,
+                                    selectedFile,
+                                    userPrompt,
+                                    selectedSystemPromptId,
+                                    onFileSelect,
+                                    onUncheckItem,
+                                    onCopyAll,
+                                    onReloadContent,
+                                    setUserPrompt,
+                                    setSelectedSystemPromptId,
+                                    totalTokens
+                                }: ContentComposerProps) => {
     return (
         <Paper withBorder shadow="sm" p="md" h="100%">
-            <Stack h="calc(100vh - 200px)">
+            <Stack h="100%" gap="md">
                 <Group justify="space-between" align="center">
                     <Title order={5}>Content Composer</Title>
                     <Group gap="xs" align="center">
-                        <Text size="xs" c="dimmed">
+                        <Text size="xs" c="dimmed" fw={500}>
                             ~{totalTokens.toLocaleString()} tokens
                         </Text>
-                        <Button
-                            size="compact-sm"
-                            variant="light"
-                            onClick={onCopyAll}
-                            leftSection={<IconCopy size={14} />}
-                        >
-                            Copy All
-                        </Button>
+                        <Tooltip label="Reload content of selected files">
+                            <ActionIcon variant="light" size="sm" onClick={onReloadContent}>
+                                <IconRefresh size={16} />
+                            </ActionIcon>
+                        </Tooltip>
+                        <Tooltip label="Copy composed prompt to clipboard">
+                            <Button
+                                size="compact-sm"
+                                variant="light"
+                                onClick={onCopyAll}
+                                leftSection={<IconCopy size={14} />}
+                            >
+                                Copy All
+                            </Button>
+                        </Tooltip>
                     </Group>
                 </Group>
 
@@ -83,17 +91,20 @@ export const ContentComposer: FC<ContentComposerProps> = ({
                     value={userPrompt}
                     onChange={(e) => setUserPrompt(e.currentTarget.value)}
                     autosize
-                    minRows={2}
+                    minRows={3}
+                    maxRows={8}
                     rightSection={
-                        <ActionIcon
-                            onClick={() => setUserPrompt('')}
-                            variant="transparent"
-                            c="dimmed"
-                            title="Clear prompt"
-                            aria-label="Clear prompt"
-                        >
-                            <IconX size={16} />
-                        </ActionIcon>
+                        userPrompt ? (
+                            <ActionIcon
+                                onClick={() => setUserPrompt('')}
+                                variant="transparent"
+                                c="dimmed"
+                                title="Clear prompt"
+                                aria-label="Clear prompt"
+                            >
+                                <IconX size={16} />
+                            </ActionIcon>
+                        ) : null
                     }
                 />
             </Stack>

@@ -1,30 +1,29 @@
-import {AppShell} from "@mantine/core"
-import {createRootRoute, Outlet} from '@tanstack/react-router'
-import {TanStackRouterDevtools} from '@tanstack/react-router-devtools'
-import NavMenu from "../layout/NavMenu.tsx";
+import { AppShell, Box, Stack } from "@mantine/core"
+import { createRootRoute, Outlet } from '@tanstack/react-router'
+import { ThemeToggle } from "../layout/ThemeToggle.tsx";
+import { NavMenu } from "../layout/NavMenu.tsx";
 
 const RootLayout = () => {
+    return (
+        <AppShell
+            padding="md"
+            navbar={{ width: 200, breakpoint: 'sm' }}
+            layout="alt"
+        >
+            <AppShell.Navbar p="md">
+                <Stack justify="space-between" h="100%">
+                    <Box>
+                        <NavMenu />
+                    </Box>
+                    <ThemeToggle />
+                </Stack>
+            </AppShell.Navbar>
 
-
-    return (<>
-            <AppShell
-                padding="md"
-                navbar={{
-                    width: '120px',
-                    breakpoint: 'sm',
-                }}
-            >
-                <AppShell.Navbar>
-                    <NavMenu/>
-                </AppShell.Navbar>
-
-                <AppShell.Main>
-                    <Outlet/>
-                    <TanStackRouterDevtools/>
-                </AppShell.Main>
-            </AppShell>
-        </>
+            <AppShell.Main>
+                <Outlet />
+            </AppShell.Main>
+        </AppShell>
     );
 }
 
-export const Route = createRootRoute({component: RootLayout})
+export const Route = createRootRoute({ component: RootLayout })

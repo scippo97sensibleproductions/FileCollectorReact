@@ -12,16 +12,16 @@ import {
     Stack,
     UseTreeReturnType,
     TextInput,
-    ActionIcon
+    ActionIcon,
+    Box
 } from "@mantine/core";
 import {FileIcon} from "./FileIcon.tsx";
-import {IconChevronDown, IconSearch, IconX} from "@tabler/icons-react";
+import {IconFolderOff, IconSearch, IconX} from "@tabler/icons-react";
 import {useEffect, useMemo, useState} from "react";
 
 interface FileTreeProps {
     tree: UseTreeReturnType;
     data: TreeNodeData[];
-    checked: string[];
     setChecked: (checkedNodes: string[]) => void;
 }
 
@@ -31,9 +31,10 @@ const filterTree = (nodes: TreeNodeData[], query: string): TreeNodeData[] => {
     }
     const lowerCaseQuery = query.toLowerCase();
 
-    function filterNodes(nodes: TreeNodeData[]): TreeNodeData[] {
+    const filterNodes = (nodes: TreeNodeData[]): TreeNodeData[] => {
         return nodes.reduce<TreeNodeData[]>((acc, node) => {
-            const matchesLabel = node.label!.toString().toLowerCase().includes(lowerCaseQuery);
+            const nodeLabel = node.label?.toString().toLowerCase() ?? '';
+            const matchesLabel = nodeLabel.includes(lowerCaseQuery);
 
             if (node.children) {
                 const filteredChildren = filterNodes(node.children);
@@ -50,13 +51,7 @@ const filterTree = (nodes: TreeNodeData[], query: string): TreeNodeData[] => {
     return filterNodes(nodes);
 };
 
-const renderTreeNode = ({
-                            node,
-                            expanded,
-                            hasChildren,
-                            elementProps,
-                            tree,
-                        }: RenderTreeNodePayload) => {
+const renderTreeNode = ({ node, elementProps, tree }: RenderTreeNodePayload) => {
     const checked = tree.isNodeChecked(node.value);
     const indeterminate = tree.isNodeIndeterminate(node.value);
 
@@ -65,50 +60,46 @@ const renderTreeNode = ({
             <Checkbox.Indicator
                 checked={checked}
                 indeterminate={indeterminate}
-                onClick={() => (!checked ? tree.checkNode(node.value) : tree.uncheckNode(node.value))}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    !checked ? tree.checkNode(node.value) : tree.uncheckNode(node.value);
+                }}
             />
 
-            <FileIcon name={node.label!.toString()} isFolder={hasChildren} expanded={expanded}/>
+            <FileIcon name={node.label!.toString()} isFolder={!!node.children} expanded={!!tree.expandedState[node.value]}/>
 
-            <Group gap={5} onClick={() => tree.toggleExpanded(node.value)} style={{cursor: 'pointer', flex: 1}}>
-                <span>{node.label}</span>
-
-                {hasChildren && (
-                    <IconChevronDown
-                        size={14}
-                        style={{transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', marginLeft: 'auto'}}
-                    />
-                )}
-            </Group>
+            <Text
+                size="sm"
+                style={{flex: 1, userSelect: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                title={node.label!.toString()}
+            >
+                {node.label}
+            </Text>
         </Group>
     );
 };
 
-const FileTree = ({tree, data, checked, setChecked}: FileTreeProps) => {
+export const FileTree = ({tree, data, setChecked}: FileTreeProps) => {
     const [searchQuery, setSearchQuery] = useState('');
-    const { expandAllNodes, setExpandedState } = tree;
+    const { expandAllNodes, collapseAllNodes } = tree;
 
     const filteredData = useMemo(() => filterTree(data, searchQuery), [data, searchQuery]);
 
     useEffect(() => {
         if (searchQuery) {
             expandAllNodes();
-        } else if (data.length > 0) {
-            setExpandedState({});
+        } else {
+            collapseAllNodes();
         }
-    }, [searchQuery, data.length, expandAllNodes, setExpandedState]);
+    }, [searchQuery, expandAllNodes, collapseAllNodes]);
 
     useEffect(() => {
-        const nodes = tree.checkedState;
-        if (JSON.stringify(nodes) !== JSON.stringify(checked)) {
-            setChecked(nodes);
-        }
-
-    }, [tree.checkedState, checked, setChecked]);
+        setChecked(tree.checkedState);
+    }, [tree.checkedState, setChecked]);
 
     return (
         <Paper withBorder shadow="sm" p="md" h="100%">
-            <Stack h="100%" gap="xs">
+            <Stack h="100%" gap="sm">
                 <Title order={5}>Project Files</Title>
                 <TextInput
                     placeholder="Search files..."
@@ -128,24 +119,27 @@ const FileTree = ({tree, data, checked, setChecked}: FileTreeProps) => {
                         ) : null
                     }
                 />
-                {data.length > 0 ? (
-                    <ScrollArea h='calc(100vh - 255px)'>
-                        <Tree
-                            data={filteredData}
-                            tree={tree}
-                            renderNode={renderTreeNode}
-                            levelOffset={23}
-                            expandOnClick={false}
-                        />
-                    </ScrollArea>
-                ) : (
-                    <Center style={{flex: 1}}>
-                        <Text c="dimmed">Select a folder to see the file tree.</Text>
-                    </Center>
-                )}
+                <Box style={{ flex: 1, overflow: 'hidden' }}>
+                    {data.length > 0 ? (
+                        <ScrollArea h="100%">
+                            <Tree
+                                data={filteredData}
+                                tree={tree}
+                                renderNode={renderTreeNode}
+                                levelOffset={20}
+                                expandOnClick
+                            />
+                        </ScrollArea>
+                    ) : (
+                        <Center h="100%">
+                            <Stack align="center">
+                                <IconFolderOff size={48} stroke={1.5} color="var(--mantine-color-gray-5)"/>
+                                <Text c="dimmed" ta="center">Select a folder to<br/>view the file tree.</Text>
+                            </Stack>
+                        </Center>
+                    )}
+                </Box>
             </Stack>
         </Paper>
     );
 };
-
-export default FileTree;

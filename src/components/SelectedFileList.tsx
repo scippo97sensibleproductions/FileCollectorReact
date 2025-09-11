@@ -1,12 +1,7 @@
-import { FC } from 'react';
-import {
-    ActionIcon,
-    NavLink,
-    ScrollArea,
-    Text,
-} from '@mantine/core';
-import { IconFile, IconX } from '@tabler/icons-react';
-import {FileInfo} from "../models/FileInfo.ts";
+import { ActionIcon, Box,  NavLink, ScrollArea, Text, Tooltip } from '@mantine/core';
+import { IconX } from '@tabler/icons-react';
+import { FileInfo } from "../models/FileInfo.ts";
+import { FileIcon } from "./FileIcon.tsx";
 
 interface SelectedFileListProps {
     files: FileInfo[];
@@ -15,41 +10,45 @@ interface SelectedFileListProps {
     onUncheckItem: (path: string) => void;
 }
 
-export const SelectedFileList: FC<SelectedFileListProps> = ({
-                                                                files,
-                                                                selectedFile,
-                                                                onFileSelect,
-                                                                onUncheckItem,
-                                                            }) => {
+export const SelectedFileList = ({
+                                     files,
+                                     selectedFile,
+                                     onFileSelect,
+                                     onUncheckItem,
+                                 }: SelectedFileListProps) => {
     return (
-        <>
-            <Text size="sm" fw={500} mt="xs">Selected Files ({files.length})</Text>
-            <ScrollArea style={{ flex: 1 }}>
+        <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <Text size="sm" fw={500}>Selected Files ({files.length})</Text>
+            <ScrollArea style={{ flex: 1 }} mt="xs">
                 {files.map((file) => (
                     <NavLink
-                        styles={{ description: { whiteSpace: 'normal', height: 'auto', wordBreak: 'break-all' } }}
                         key={file.path}
                         active={selectedFile?.path === file.path}
-                        label={file.path.split(/[\\/]/).pop()}
+                        label={
+                            <Tooltip label={file.path} position="bottom-start">
+                                <Text truncate="end">{file.path.split(/[\\/]/).pop()}</Text>
+                            </Tooltip>
+                        }
                         description={file.error ? 'Error reading file' : `~${(file.tokenCount ?? 0).toLocaleString()} tokens`}
                         color={file.error ? 'red' : 'blue'}
                         onClick={() => onFileSelect(selectedFile?.path === file.path ? null : file)}
-                        leftSection={<IconFile size="1rem" />}
+                        leftSection={<FileIcon name={file.path} isFolder={false} expanded={false} />}
                         rightSection={
                             <ActionIcon
                                 variant="transparent"
+                                c="dimmed"
                                 aria-label="uncheckFile"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onUncheckItem(file.path);
                                 }}
                             >
-                                <IconX />
+                                <IconX size={16} />
                             </ActionIcon>
                         }
                     />
                 ))}
             </ScrollArea>
-        </>
+        </Box>
     );
-};
+}

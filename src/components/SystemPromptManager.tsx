@@ -1,4 +1,4 @@
-import { useState, useEffect, FC } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Container,
     Title,
@@ -14,7 +14,10 @@ import {
     ScrollArea,
     rem,
     ThemeIcon,
-    Textarea, Accordion,
+    Textarea,
+    Accordion,
+    Center,
+    Tooltip
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -27,21 +30,18 @@ import {
     IconAlertCircle,
     IconDeviceFloppy,
 } from '@tabler/icons-react';
-
 import {
     exists,
     readTextFile,
     writeTextFile,
     BaseDirectory,
 } from '@tauri-apps/plugin-fs';
-import {createFileEnsuringPath} from "../helpers/FileSystemManager.ts";
+import { createFileEnsuringPath } from "../helpers/FileSystemManager.ts";
 
-// --- Constants from Environment Variables ---
 const PROMPTS_PATH = import.meta.env.VITE_SYSTEM_PROMPTS_PATH || 'FileCollector/system_prompts.json';
-const BASE_DIR = (Number(import.meta.env.VITE_FILE_BASE_PATH) || 21) as BaseDirectory; // 21 is Home
+const BASE_DIR = (Number(import.meta.env.VITE_FILE_BASE_PATH) || 21) as BaseDirectory;
 
-const SystemPromptManager: FC = () => {
-    // --- State Management ---
+export const SystemPromptManager = () => {
     const [prompts, setPrompts] = useState<SystemPromptItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -49,7 +49,6 @@ const SystemPromptManager: FC = () => {
     const [newPromptContent, setNewPromptContent] = useState('');
     const [editingPrompt, setEditingPrompt] = useState<SystemPromptItem | null>(null);
 
-    // --- File System Logic ---
     const loadPrompts = async () => {
         setLoading(true);
         setError(null);
@@ -63,14 +62,14 @@ const SystemPromptManager: FC = () => {
             } else {
                 const content = await readTextFile(PROMPTS_PATH, { baseDir: BASE_DIR });
                 const data = content ? JSON.parse(content) : [];
-                if (Array.isArray(data)) {
-                    setPrompts(data);
-                } else {
+                if (!Array.isArray(data)) {
                     throw new Error('Invalid data format in system_prompts.json. Expected an array.');
                 }
+                setPrompts(data);
             }
-        } catch (err: any) {
-            setError(`Failed to load or parse system_prompts.json: ${err.message}`);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            setError(`Failed to load or parse system_prompts.json: ${errorMessage}`);
         } finally {
             setLoading(false);
         }
@@ -81,8 +80,9 @@ const SystemPromptManager: FC = () => {
             const content = JSON.stringify(updatedPrompts, null, 2);
             await writeTextFile(PROMPTS_PATH, content, { baseDir: BASE_DIR });
             setPrompts(updatedPrompts);
-        } catch (err: any) {
-            setError(`Failed to save system_prompts.json: ${err.message}`);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            setError(`Failed to save system_prompts.json: ${errorMessage}`);
         }
     };
 
@@ -90,7 +90,6 @@ const SystemPromptManager: FC = () => {
         loadPrompts();
     }, []);
 
-    // --- CRUD Handlers ---
     const handleAddPrompt = async () => {
         if (!newPromptName.trim() || !newPromptContent.trim()) return;
 
@@ -124,7 +123,7 @@ const SystemPromptManager: FC = () => {
     };
 
     const handleUpdatePrompt = async () => {
-        if (!editingPrompt) return;
+        if (!editingPrompt || !editingPrompt.name.trim() || !editingPrompt.content.trim()) return;
         const updatedPrompts = prompts.map(p => p.id === editingPrompt.id ? editingPrompt : p);
         await savePrompts(updatedPrompts);
         notifications.show({
@@ -136,25 +135,22 @@ const SystemPromptManager: FC = () => {
         setEditingPrompt(null);
     };
 
-    // --- UI Rendering ---
-    if (loading) return <Container p="md"><Group justify="center"><Loader /></Group></Container>;
-    if (error) return <Container p="md"><Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red">{error}</Alert></Container>;
+    if (loading) return <Center p="xl"><Loader /></Center>;
+    if (error) return <Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red">{error}</Alert>;
 
     return (
-        <Container p="md" fluid>
+        <Container p={0} fluid>
             <Stack gap="xl">
-                {/* Header */}
                 <Group>
                     <ThemeIcon size="xl" variant="gradient" gradient={{ from: 'teal', to: 'lime', deg: 105 }}>
                         <IconMessageChatbot style={{ width: rem(32), height: rem(32) }} />
                     </ThemeIcon>
                     <div>
-                        <Title order={2}>System Prompt Manager</Title>
-                        <Text c="dimmed">Create and manage reusable prompts for your tasks</Text>
+                        <Title order={3}>System Prompt Manager</Title>
+                        <Text c="dimmed">Create and manage reusable prompts for your tasks.</Text>
                     </div>
                 </Group>
 
-                {/* Add New Prompt Form */}
                 <Paper shadow="sm" p="md" withBorder>
                     <Stack>
                         <TextInput
@@ -183,15 +179,13 @@ const SystemPromptManager: FC = () => {
                     </Stack>
                 </Paper>
 
-                {/* Prompts List */}
                 <Paper shadow="sm" withBorder>
-                    <ScrollArea.Autosize mah={500}>
+                    <ScrollArea.Autosize mah="calc(100vh - 540px)">
                         {prompts.length > 0 ? (
-                            <Accordion variant="separated">
+                            <Accordion variant="separated" chevronPosition="left">
                                 {prompts.map((prompt) => (
                                     <Accordion.Item key={prompt.id} value={prompt.id}>
                                         {editingPrompt?.id === prompt.id ? (
-                                            // Edit View
                                             <Stack p="md" gap="sm">
                                                 <TextInput
                                                     label="Prompt Name"
@@ -211,18 +205,17 @@ const SystemPromptManager: FC = () => {
                                                 </Group>
                                             </Stack>
                                         ) : (
-                                            // Display View
                                             <>
                                                 <Accordion.Control>
                                                     <Group justify="space-between">
                                                         <Text fw={500}>{prompt.name}</Text>
                                                         <Group gap="xs" onClick={(e) => e.stopPropagation()}>
-                                                            <ActionIcon variant="light" color="blue" onClick={() => setEditingPrompt(prompt)} title="Edit">
-                                                                <IconPencil size={18} />
-                                                            </ActionIcon>
-                                                            <ActionIcon variant="light" color="red" onClick={() => handleDeletePrompt(prompt.id)} title="Delete">
-                                                                <IconTrash size={18} />
-                                                            </ActionIcon>
+                                                            <Tooltip label="Edit">
+                                                                <ActionIcon variant="subtle" color="blue" onClick={() => setEditingPrompt(prompt)}><IconPencil size={18} /></ActionIcon>
+                                                            </Tooltip>
+                                                            <Tooltip label="Delete">
+                                                                <ActionIcon variant="subtle" color="red" onClick={() => handleDeletePrompt(prompt.id)}><IconTrash size={18} /></ActionIcon>
+                                                            </Tooltip>
                                                         </Group>
                                                     </Group>
                                                 </Accordion.Control>
@@ -235,9 +228,9 @@ const SystemPromptManager: FC = () => {
                                 ))}
                             </Accordion>
                         ) : (
-                            <Text c="dimmed" ta="center" p="xl">
-                                No system prompts found. Add one above to get started.
-                            </Text>
+                            <Center p="xl">
+                                <Text c="dimmed">No system prompts found.</Text>
+                            </Center>
                         )}
                     </ScrollArea.Autosize>
                 </Paper>
@@ -245,5 +238,3 @@ const SystemPromptManager: FC = () => {
         </Container>
     );
 };
-
-export default SystemPromptManager;

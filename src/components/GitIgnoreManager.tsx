@@ -1,4 +1,4 @@
-import { useState, useEffect, FC } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Container,
     Title,
@@ -14,6 +14,10 @@ import {
     ScrollArea,
     rem,
     ThemeIcon,
+    useMantineTheme,
+    Card,
+    Center,
+    Tooltip
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -27,34 +31,21 @@ import {
     IconAlertCircle,
     IconDeviceFloppy,
 } from '@tabler/icons-react';
-
-import {
-    exists,
-    readTextFile,
-    writeTextFile,
-    BaseDirectory,
-} from '@tauri-apps/plugin-fs';
+import { exists, readTextFile, writeTextFile, BaseDirectory } from '@tauri-apps/plugin-fs';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
-import {createFileEnsuringPath} from "../helpers/FileSystemManager.ts";
+import { createFileEnsuringPath } from "../helpers/FileSystemManager.ts";
 
-// --- Constants from Environment Variables ---
 const GITIGNORE_PATH = import.meta.env.VITE_GITIGNORE_PATH || 'FileCollector/gitignores.json';
-const BASE_DIR = (Number(import.meta.env.VITE_FILE_BASE_PATH) || 21) as BaseDirectory; // 21 is Home
+const BASE_DIR = (Number(import.meta.env.VITE_FILE_BASE_PATH) || 21) as BaseDirectory;
 
-const GitIgnoreManager: FC = () => {
-    // --- State Management ---
+export const GitIgnoreManager = () => {
+    const theme = useMantineTheme();
     const [items, setItems] = useState<GitIgnoreItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [newPattern, setNewPattern] = useState('');
     const [editingState, setEditingState] = useState<{ index: number; value: string } | null>(null);
 
-    // --- File System Logic ---
-
-    /**
-     * Loads the gitignore items from the JSON file.
-     * Creates the file with an empty array if it doesn't exist.
-     */
     const loadGitIgnoreItems = async () => {
         setLoading(true);
         setError(null);
@@ -62,7 +53,6 @@ const GitIgnoreManager: FC = () => {
             const fileExists = await exists(GITIGNORE_PATH, { baseDir: BASE_DIR });
 
             if (!fileExists) {
-                console.log(`File "${GITIGNORE_PATH}" not found. Creating...`);
                 await createFileEnsuringPath(GITIGNORE_PATH, { baseDir: BASE_DIR });
                 await writeTextFile(GITIGNORE_PATH, '[]', { baseDir: BASE_DIR });
                 setItems([]);
@@ -74,15 +64,14 @@ const GitIgnoreManager: FC = () => {
             } else {
                 const content = await readTextFile(GITIGNORE_PATH, { baseDir: BASE_DIR });
                 const data = content ? JSON.parse(content) : [];
-                if (Array.isArray(data)) {
-                    setItems(data);
-                } else {
+                if (!Array.isArray(data)) {
                     throw new Error('Invalid data format in gitignores.json. Expected an array.');
                 }
+                setItems(data);
             }
-        } catch (err: any) {
-            console.error('Failed to load gitignore items:', err);
-            setError(`Failed to load or parse gitignores.json: ${err.message}`);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            setError(`Failed to load or parse gitignores.json: ${errorMessage}`);
             notifications.show({
                 title: 'Loading Error',
                 message: 'Could not load the gitignore file. Please check permissions or file content.',
@@ -94,12 +83,7 @@ const GitIgnoreManager: FC = () => {
         }
     };
 
-    /**
-     * Saves the provided gitignore items to the JSON file, removing duplicates.
-     * @param {GitIgnoreItem[]} updatedItems - The new list of items to save.
-     */
     const saveGitIgnoreItems = async (updatedItems: GitIgnoreItem[]) => {
-        // --- Duplicate Removal Logic ---
         const uniquePatterns = [...new Set(updatedItems.map((item) => item.pattern.trim()).filter(Boolean))];
         const finalItems = uniquePatterns.map((pattern) => ({ pattern }));
 
@@ -107,34 +91,30 @@ const GitIgnoreManager: FC = () => {
             const content = JSON.stringify(finalItems, null, 2);
             await writeTextFile(GITIGNORE_PATH, content, { baseDir: BASE_DIR });
             setItems(finalItems);
-            return finalItems; // Return the cleaned list
-        } catch (err: any) {
-            console.error('Failed to save gitignore items:', err);
-            setError(`Failed to save gitignores.json: ${err.message}`);
+            return finalItems;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            setError(`Failed to save gitignores.json: ${errorMessage}`);
             notifications.show({
                 title: 'Save Error',
                 message: 'Could not save changes to the gitignore file.',
                 color: 'red',
                 icon: <IconAlertCircle />,
             });
-            return items; // Return original items on failure
+            return items;
         }
     };
 
-    // --- Initial Load Effect ---
     useEffect(() => {
         loadGitIgnoreItems();
     }, []);
 
-    // --- CRUD & Import Handlers ---
-
     const handleAddItem = async () => {
         if (!newPattern.trim()) return;
+        await saveGitIgnoreItems([...items, { pattern: newPattern }]);
+        const isNewPattern = !items.some(item => item.pattern === newPattern.trim());
 
-        const updatedList = await saveGitIgnoreItems([...items, { pattern: newPattern }]);
-
-        const addedCount = updatedList.length - items.length;
-        if (addedCount > 0) {
+        if (isNewPattern) {
             notifications.show({
                 title: 'Pattern Added',
                 message: `Successfully added "${newPattern.trim()}".`,
@@ -148,7 +128,6 @@ const GitIgnoreManager: FC = () => {
                 color: 'yellow',
             });
         }
-
         setNewPattern('');
     };
 
@@ -165,7 +144,7 @@ const GitIgnoreManager: FC = () => {
     };
 
     const handleUpdateItem = async () => {
-        if (!editingState) return;
+        if (!editingState || !editingState.value.trim()) return;
 
         const updatedItems = [...items];
         updatedItems[editingState.index] = { pattern: editingState.value.trim() };
@@ -189,13 +168,13 @@ const GitIgnoreManager: FC = () => {
                 title: 'Import .gitignore file',
             });
 
-            if (!selectedPath) return; // User cancelled
+            if (!selectedPath) return;
 
             const content = await readTextFile(selectedPath as string);
             const newPatterns = content
                 .split('\n')
                 .map((line) => line.trim())
-                .filter((line) => line && !line.startsWith('#')) // Filter out empty lines and comments
+                .filter((line) => line && !line.startsWith('#'))
                 .map((pattern) => ({ pattern }));
 
             if (newPatterns.length === 0) {
@@ -217,9 +196,7 @@ const GitIgnoreManager: FC = () => {
                 color: 'grape',
                 icon: <IconFileImport />,
             });
-
-        } catch (err: any) {
-            console.error('Failed to import file:', err);
+        } catch (err) {
             notifications.show({
                 title: 'Import Error',
                 message: 'An error occurred while importing the file.',
@@ -228,41 +205,25 @@ const GitIgnoreManager: FC = () => {
         }
     };
 
-    // --- UI Rendering ---
-
     if (loading) {
-        return (
-            <Container p="md">
-                <Group justify="center">
-                    <Loader color="blue" />
-                    <Text>Loading Gitignore Manager...</Text>
-                </Group>
-            </Container>
-        );
+        return <Center p="xl"><Loader color="blue" /></Center>;
     }
 
     if (error) {
-        return (
-            <Container p="md">
-                <Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red" variant="light">
-                    {error}
-                </Alert>
-            </Container>
-        );
+        return <Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red" variant="light">{error}</Alert>;
     }
 
     return (
-        <Container p="md" fluid>
+        <Container p={0} fluid>
             <Stack gap="xl">
-                {/* Header */}
                 <Group justify="space-between">
                     <Group>
                         <ThemeIcon size="xl" variant="gradient" gradient={{ from: 'indigo', to: 'cyan' }}>
                             <IconGitBranch style={{ width: rem(32), height: rem(32) }} />
                         </ThemeIcon>
                         <div>
-                            <Title order={2}>Gitignore Manager</Title>
-                            <Text c="dimmed">Manage your global gitignore patterns</Text>
+                            <Title order={3}>Gitignore Manager</Title>
+                            <Text c="dimmed">Manage global gitignore patterns for file collection.</Text>
                         </div>
                     </Group>
                     <Button
@@ -275,7 +236,6 @@ const GitIgnoreManager: FC = () => {
                     </Button>
                 </Group>
 
-                {/* Add New Item Form */}
                 <Paper shadow="sm" p="md" withBorder>
                     <Group>
                         <TextInput
@@ -296,15 +256,13 @@ const GitIgnoreManager: FC = () => {
                     </Group>
                 </Paper>
 
-                {/* Items List */}
-                <Paper shadow="sm" withBorder>
-                    <ScrollArea.Autosize mah={500}>
-                        <Stack gap={0}>
+                <Paper shadow="sm" withBorder style={{ flex: 1 }}>
+                    <ScrollArea.Autosize mah="calc(100vh - 420px)">
+                        <Stack p="xs" gap="xs">
                             {items.length > 0 ? (
                                 items.map((item, index) => (
-                                    <Paper key={index} p="xs" m="xs" radius="sm" withBorder>
+                                    <Card key={index} p="xs" radius="sm" withBorder>
                                         {editingState?.index === index ? (
-                                            // --- Edit Mode UI ---
                                             <Group justify="space-between">
                                                 <TextInput
                                                     value={editingState.value}
@@ -317,44 +275,41 @@ const GitIgnoreManager: FC = () => {
                                                     style={{ flex: 1 }}
                                                 />
                                                 <Group gap="xs">
-                                                    <ActionIcon variant="light" color="green" onClick={handleUpdateItem} title="Save">
-                                                        <IconCheck size={18} />
-                                                    </ActionIcon>
-                                                    <ActionIcon variant="light" color="gray" onClick={() => setEditingState(null)} title="Cancel">
-                                                        <IconX size={18} />
-                                                    </ActionIcon>
+                                                    <Tooltip label="Save">
+                                                        <ActionIcon variant="light" color="green" onClick={handleUpdateItem}><IconCheck size={18} /></ActionIcon>
+                                                    </Tooltip>
+                                                    <Tooltip label="Cancel">
+                                                        <ActionIcon variant="light" color="gray" onClick={() => setEditingState(null)}><IconX size={18} /></ActionIcon>
+                                                    </Tooltip>
                                                 </Group>
                                             </Group>
                                         ) : (
-                                            // --- Display Mode UI ---
                                             <Group justify="space-between">
-                                                <Text ff="monospace">{item.pattern}</Text>
+                                                <Text ff="monospace" fz="sm">{item.pattern}</Text>
                                                 <Group gap="xs">
-                                                    <ActionIcon variant="light" color="blue" onClick={() => setEditingState({ index, value: item.pattern })} title="Edit">
-                                                        <IconPencil size={18} />
-                                                    </ActionIcon>
-                                                    <ActionIcon variant="light" color="red" onClick={() => handleDeleteItem(index)} title="Delete">
-                                                        <IconTrash size={18} />
-                                                    </ActionIcon>
+                                                    <Tooltip label="Edit">
+                                                        <ActionIcon variant="subtle" color="blue" onClick={() => setEditingState({ index, value: item.pattern })}><IconPencil size={18} /></ActionIcon>
+                                                    </Tooltip>
+                                                    <Tooltip label="Delete">
+                                                        <ActionIcon variant="subtle" color="red" onClick={() => handleDeleteItem(index)}><IconTrash size={18} /></ActionIcon>
+                                                    </Tooltip>
                                                 </Group>
                                             </Group>
                                         )}
-                                    </Paper>
+                                    </Card>
                                 ))
                             ) : (
-                                <Text c="dimmed" ta="center" p="xl">
-                                    No gitignore patterns found. Add one above or import a file.
-                                </Text>
+                                <Center p="xl">
+                                    <Text c="dimmed">No gitignore patterns found.</Text>
+                                </Center>
                             )}
                         </Stack>
                     </ScrollArea.Autosize>
+                    <Text c="dimmed" size="xs" ta="right" p="xs" style={{borderTop: `1px solid ${theme.colors.dark[4]}`}}>
+                        Total Patterns: {items.length}
+                    </Text>
                 </Paper>
-                <Text c="dimmed" size="sm" ta="center">
-                    Total Patterns: {items.length}
-                </Text>
             </Stack>
         </Container>
     );
 };
-
-export default GitIgnoreManager;

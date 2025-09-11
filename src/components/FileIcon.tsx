@@ -1,14 +1,11 @@
 import {
-    IconBrandCSharp, IconBrandVisualStudio, IconBrandWindows,
-    IconCode, IconFile,
-    IconFileText,
-    IconFileTypeDoc, IconFileTypePdf,
-    IconFileTypeSvg,
-    IconFileTypeXls, IconFileTypeXml, IconFileTypeZip,
-    IconFolder,
-    IconFolderOpen, IconJson, IconMovie, IconMusic,
-    IconPhoto
+    IconBrandCSharp, IconBrandGit, IconBrandHtml5, IconBrandJavascript,
+    IconBrandPython, IconBrandReact, IconBrandRust, IconBrandSass,
+    IconBrandTypescript, IconBrandVisualStudio, IconBrandVite,
+    IconCode, IconFile, IconFileText, IconFileTypeXml, IconFolder, IconFolderOpen, IconJson, IconMarkdown,
+    IconPhoto, IconSquareLetterY, IconTerminal2
 } from "@tabler/icons-react";
+import { ReactNode } from "react";
 
 interface FileIconProps {
     name: string;
@@ -16,64 +13,50 @@ interface FileIconProps {
     expanded: boolean;
 }
 
+const fileIconMap: Record<string, { icon: ReactNode; color: string }> = {
+    ts: { icon: <IconBrandTypescript size={18} />, color: '#3178c6' },
+    tsx: { icon: <IconBrandReact size={18} />, color: '#61dafb' },
+    js: { icon: <IconBrandJavascript size={18} />, color: '#f7df1e' },
+    jsx: { icon: <IconBrandReact size={18} />, color: '#61dafb' },
+    json: { icon: <IconJson size={18} />, color: '#f9a825' },
+    cs: { icon: <IconBrandCSharp size={18} />, color: '#68217a' },
+    sln: { icon: <IconBrandVisualStudio size={18} />, color: '#800080' },
+    csproj: { icon: <IconFileTypeXml size={18} />, color: '#bcaaa4' },
+    md: { icon: <IconMarkdown size={18} />, color: '#ffffff' },
+    html: { icon: <IconBrandHtml5 size={18} />, color: '#e34f26' },
+    css: { icon: <IconCode size={18} />, color: '#563d7c' },
+    scss: { icon: <IconBrandSass size={18} />, color: '#c6538c' },
+    py: { icon: <IconBrandPython size={18} />, color: '#3572A5' },
+    rs: { icon: <IconBrandRust size={18} />, color: '#dea584' },
+    sh: { icon: <IconTerminal2 size={18} />, color: '#4d5a5e' },
+    yml: { icon: <IconSquareLetterY size={18} />, color: '#cb171e' },
+    yaml: { icon: <IconSquareLetterY size={18} />, color: '#cb171e' },
+    xml: { icon: <IconFileTypeXml size={18} />, color: '#bcaaa4' },
+    txt: { icon: <IconFileText size={18} />, color: '#eeeeee' },
+    gitignore: { icon: <IconBrandGit size={18} />, color: '#f05032' },
+    vite: { icon: <IconBrandVite size={18} />, color: '#646cff' },
+    png: { icon: <IconPhoto size={18} />, color: '#a5d6a7' },
+    jpg: { icon: <IconPhoto size={18} />, color: '#a5d6a7' },
+    jpeg: { icon: <IconPhoto size={18} />, color: '#a5d6a7' },
+    gif: { icon: <IconPhoto size={18} />, color: '#a5d6a7' },
+    svg: { icon: <IconPhoto size={18} />, color: '#ffab91' },
+};
+
 export function FileIcon({ name, isFolder, expanded }: FileIconProps) {
     if (isFolder) {
         return expanded ? <IconFolderOpen size={18} color="#f7d794" /> : <IconFolder size={18} color="#f7d794" />;
     }
 
-    // Image files
-    if (/\.(jpg|jpeg|png|gif|bmp|tiff|webp)$/i.test(name)) {
-        return <IconPhoto size={18} color="#a5d6a7" />;
-    }
-    if (name.endsWith('.svg')) {
-        return <IconFileTypeSvg size={18} color="#ffab91" />;
+    const extension = name.split('.').pop()?.toLowerCase() ?? '';
+    let specialName = '';
+    if (name.startsWith('.git')) specialName = 'gitignore';
+    if (name.includes('vite.config')) specialName = 'vite';
+
+    const iconInfo = fileIconMap[specialName] || fileIconMap[extension];
+
+    if (iconInfo) {
+        return <span style={{ color: iconInfo.color }}>{iconInfo.icon}</span>;
     }
 
-    // Document files
-    if (name.endsWith('.doc') || name.endsWith('.docx')) {
-        return <IconFileTypeDoc size={18} color="#90caf9" />;
-    }
-    if (name.endsWith('.xls') || name.endsWith('.xlsx') || name.endsWith('.csv')) {
-        return <IconFileTypeXls size={18} color="#a5d6a7" />;
-    }
-    if (name.endsWith('.pdf')) {
-        return <IconFileTypePdf size={18} color="#ef9a9a" />;
-    }
-    if (name.endsWith('.zip') || name.endsWith('.rar') || name.endsWith('.7z')) {
-        return <IconFileTypeZip size={18} color="#b39ddb" />;
-    }
-
-    // Audio and Video files
-    if (/\.(mp3|wav|ogg|flac)$/i.test(name)) {
-        return <IconMusic size={18} color="#ce93d8" />;
-    }
-    if (/\.(mp4|avi|mov|mkv|wmv)$/i.test(name)) {
-        return <IconMovie size={18} color="#f48fb1" />;
-    }
-
-    // Original file types
-    if (name.endsWith('.json')) {
-        return <IconJson size={18} color="#fdd835" />;
-    }
-    if (name.endsWith('.xml')) {
-        return <IconFileTypeXml size={18} color="#bcaaa4" />;
-    }
-    if (name.endsWith('.txt')) {
-        return <IconFileText size={18} color="#eeeeee" />;
-    }
-    if (name.endsWith('.js') || name.endsWith('.ts') || name.endsWith('.tsx') || name.endsWith('.jsx')) {
-        return <IconCode size={18} color="#80cbc4" />;
-    }
-    if (name.endsWith('.cs')) {
-        return <IconBrandCSharp size={18} color="#9ccc65" />;
-    }
-    if (name.endsWith('.exe')) {
-        return <IconBrandWindows size={18} color="#81d4fa" />;
-    }
-    if (name.endsWith('.sln') || name.endsWith('.slnx') || name.endsWith('.csproj') || name.endsWith('.tsproj')) {
-        return <IconBrandVisualStudio size={18} color="#ba68c8" />;
-    }
-
-    // Generic file icon as a fallback
     return <IconFile size={18} color="#bdbdbd" />;
 }
