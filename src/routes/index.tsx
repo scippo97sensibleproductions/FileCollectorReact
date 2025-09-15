@@ -67,6 +67,13 @@ const getTreeNodesRecursive = async (path: string, relativePath: string, process
     return resolvedNodes;
 };
 
+const collectFilePaths = (node: DefinedTreeNode): string[] => {
+    if (!node.children) {
+        return [node.value];
+    }
+    return node.children.flatMap(collectFilePaths);
+};
+
 function Index() {
     const [path, setPath] = useState<string | null>(null);
     const [treeNodeData, setTreeNodeData] = useState<DefinedTreeNode[]>([]);
@@ -123,28 +130,25 @@ function Index() {
         }
     };
 
-    const handleNodeToggle = useCallback((node: { value: string, children?: DefinedTreeNode[] }, isCurrentlyChecked: boolean) => {
-        const pathsToToggle = new Set<string>();
+    const handleNodeToggle = useCallback((node: DefinedTreeNode) => {
+        const pathsToToggle = collectFilePaths(node);
+        if (pathsToToggle.length === 0) return;
 
-        const collectPaths = (currentNode: { value: string, children?: DefinedTreeNode[] }) => {
-            pathsToToggle.add(currentNode.value);
-            if (currentNode.children) {
-                currentNode.children.forEach(collectPaths);
-            }
-        };
+        const checkedItemsSet = new Set(checkedItems);
+        const checkedDescendantCount = pathsToToggle.filter(path => checkedItemsSet.has(path)).length;
 
-        collectPaths(node);
+        const shouldCheckAll = checkedDescendantCount < pathsToToggle.length;
 
-        setCheckedItems(prevCheckedItems => {
-            const currentCheckedSet = new Set(prevCheckedItems);
-            if (isCurrentlyChecked) {
-                pathsToToggle.forEach(p => currentCheckedSet.delete(p));
+        setCheckedItems(currentCheckedItems => {
+            const newCheckedItemsSet = new Set(currentCheckedItems);
+            if (shouldCheckAll) {
+                pathsToToggle.forEach(path => newCheckedItemsSet.add(path));
             } else {
-                pathsToToggle.forEach(p => currentCheckedSet.add(p));
+                pathsToToggle.forEach(path => newCheckedItemsSet.delete(path));
             }
-            return Array.from(currentCheckedSet);
+            return Array.from(newCheckedItemsSet);
         });
-    }, []);
+    }, [checkedItems]);
 
     return (
         <Stack h="calc(100vh - var(--app-shell-padding, 1rem) * 2)" gap="md">

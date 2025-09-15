@@ -10,15 +10,18 @@ interface FileManagerProps {
     data: DefinedTreeNode[];
     allFiles: { label: string; value: string }[];
     checkedItems: string[];
-    setCheckedItems: (checkedItems: string[]) => void;
-    onNodeToggle: (node: { value: string, children?: DefinedTreeNode[] }, isChecked: boolean) => void;
+    setCheckedItems: React.Dispatch<React.SetStateAction<string[]>>;
+    onNodeToggle: (node: DefinedTreeNode) => void;
 }
 
 export const FileManager = ({ data, allFiles, checkedItems, setCheckedItems, onNodeToggle }: FileManagerProps) => {
 
-    const handleCheckItem = (path: string) => {
-        const isChecked = checkedItems.includes(path);
-        onNodeToggle({ value: path }, isChecked);
+    const handleAddItem = (path: string) => {
+        setCheckedItems(prevItems => Array.from(new Set(prevItems).add(path)));
+    };
+
+    const handleRemoveItem = (path: string) => {
+        setCheckedItems(prevItems => prevItems.filter(p => p !== path));
     };
 
     const checkedFiles = useMemo(() => {
@@ -52,7 +55,7 @@ export const FileManager = ({ data, allFiles, checkedItems, setCheckedItems, onN
                             <FileSearch
                                 allFiles={allFiles}
                                 checkedItems={checkedItems}
-                                onCheckItem={handleCheckItem}
+                                onCheckItem={handleAddItem}
                             />
                         </Tabs.Panel>
                     </Tabs>
@@ -61,7 +64,7 @@ export const FileManager = ({ data, allFiles, checkedItems, setCheckedItems, onN
             <Flex style={{ flex: 1, minWidth: 0 }}>
                 <FileTextRenderer
                     data={checkedFiles}
-                    uncheckItem={handleCheckItem}
+                    uncheckItem={handleRemoveItem}
                     onClearAll={() => setCheckedItems([])}
                 />
             </Flex>

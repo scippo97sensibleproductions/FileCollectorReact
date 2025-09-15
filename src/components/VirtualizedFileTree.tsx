@@ -16,15 +16,17 @@ interface FlatNode {
 interface VirtualizedFileTreeProps {
     data: DefinedTreeNode[];
     checkedItems: string[];
-    onNodeToggle: (node: DefinedTreeNode, isChecked: boolean) => void;
+    onNodeToggle: (node: DefinedTreeNode) => void;
 }
+
+type CheckState = 'checked' | 'unchecked' | 'indeterminate';
 
 type TreeRowProps = {
     flatNodes: FlatNode[];
-    checkedItemsSet: Set<string>;
+    nodeCheckStates: Map<string, CheckState>;
     expandedIds: Set<string>;
     toggleExpand: (id: string) => void;
-    toggleCheck: (node: DefinedTreeNode, isChecked: boolean) => void;
+    toggleCheck: (node: DefinedTreeNode) => void;
 };
 
 const flattenTree = (nodes: DefinedTreeNode[], expandedIds: Set<string>, depth = 0): FlatNode[] => {
@@ -39,11 +41,20 @@ const flattenTree = (nodes: DefinedTreeNode[], expandedIds: Set<string>, depth =
     return flatList;
 };
 
+const collectFilePaths = (node: DefinedTreeNode): string[] => {
+    if (!node.children) {
+        return [node.value];
+    }
+    return node.children.flatMap(collectFilePaths);
+};
+
 const NodeRow = memo(({ index, style, ariaAttributes, ...props }: RowComponentProps<TreeRowProps>) => {
-    const { flatNodes, checkedItemsSet, expandedIds, toggleExpand, toggleCheck } = props;
+    const { flatNodes, nodeCheckStates, expandedIds, toggleExpand, toggleCheck } = props;
     const { id, label, depth, isFolder, node } = flatNodes[index];
 
-    const isChecked = checkedItemsSet.has(id);
+    const state = nodeCheckStates.get(id) ?? 'unchecked';
+    const isChecked = state === 'checked';
+    const isIndeterminate = state === 'indeterminate';
 
     return (
         <Box style={style} {...ariaAttributes}>
@@ -64,12 +75,14 @@ const NodeRow = memo(({ index, style, ariaAttributes, ...props }: RowComponentPr
                     style={{ flex: 1, cursor: 'pointer', height: '100%' }}
                     onClick={(e) => {
                         e.stopPropagation();
-                        toggleCheck(node, isChecked);
+                        toggleCheck(node);
                     }}
                 >
-                    <Checkbox.Indicator
+                    <Checkbox
                         checked={isChecked}
-                        style={{ cursor: 'pointer' }}
+                        indeterminate={isIndeterminate}
+                        readOnly
+                        aria-hidden
                     />
                     <FileIcon name={label} isFolder={isFolder} expanded={expandedIds.has(id)} />
                     <Text size="sm" truncate="end" style={{ userSelect: 'none' }} title={label}>
@@ -96,16 +109,49 @@ export const VirtualizedFileTree = ({ data, checkedItems, onNodeToggle }: Virtua
         });
     }, []);
 
+    const nodeCheckStates = useMemo(() => {
+        const states = new Map<string, CheckState>();
+        const checkedSet = new Set(checkedItems);
+
+        const calculateState = (node: DefinedTreeNode): CheckState => {
+            if (!node.children) {
+                return checkedSet.has(node.value) ? 'checked' : 'unchecked';
+            }
+
+            const descendantFiles = collectFilePaths(node);
+            if (descendantFiles.length === 0) {
+                return 'unchecked';
+            }
+
+            const checkedCount = descendantFiles.filter(path => checkedSet.has(path)).length;
+
+            if (checkedCount === 0) return 'unchecked';
+            if (checkedCount === descendantFiles.length) return 'checked';
+            return 'indeterminate';
+        };
+
+        const traverse = (nodes: DefinedTreeNode[]) => {
+            for (const node of nodes) {
+                states.set(node.value, calculateState(node));
+                if (node.children) {
+                    traverse(node.children);
+                }
+            }
+        };
+
+        traverse(data);
+        return states;
+    }, [data, checkedItems]);
+
     const flatNodes = useMemo(() => flattenTree(data, expandedIds), [data, expandedIds]);
-    const checkedItemsSet = useMemo(() => new Set(checkedItems), [checkedItems]);
 
     const rowProps = useMemo(() => ({
         flatNodes,
-        checkedItemsSet,
+        nodeCheckStates,
         expandedIds,
         toggleExpand,
         toggleCheck: onNodeToggle,
-    }), [flatNodes, checkedItemsSet, expandedIds, toggleExpand, onNodeToggle]);
+    }), [flatNodes, nodeCheckStates, expandedIds, toggleExpand, onNodeToggle]);
 
     return (
         <Stack h="100%" gap="sm">
