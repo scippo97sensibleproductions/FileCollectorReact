@@ -7,9 +7,10 @@ import {
     Stack,
     Text,
     Textarea,
-    Title, Tooltip,
+    Title,
+    Tooltip,
 } from '@mantine/core';
-import { IconCopy, IconRefresh, IconX } from '@tabler/icons-react';
+import { IconCopy, IconRefresh, IconTrash, IconX } from '@tabler/icons-react';
 import { SelectedFileList } from './SelectedFileList';
 import type { FileInfo } from "../models/FileInfo.ts";
 
@@ -23,6 +24,7 @@ interface ContentComposerProps {
     onUncheckItem: (path: string) => void;
     onCopyAll: () => void;
     onReloadContent: () => void;
+    onClearAll: () => void;
     setUserPrompt: (prompt: string) => void;
     setSelectedSystemPromptId: (id: string | null) => void;
     totalTokens: number;
@@ -38,10 +40,13 @@ export const ContentComposer = ({
                                     onUncheckItem,
                                     onCopyAll,
                                     onReloadContent,
+                                    onClearAll,
                                     setUserPrompt,
                                     setSelectedSystemPromptId,
                                     totalTokens
                                 }: ContentComposerProps) => {
+    const hasFiles = files.length > 0;
+
     return (
         <Paper withBorder shadow="sm" p="md" h="100%">
             <Stack h="100%" gap="md">
@@ -52,8 +57,13 @@ export const ContentComposer = ({
                             ~{totalTokens.toLocaleString()} tokens
                         </Text>
                         <Tooltip label="Reload content of selected files">
-                            <ActionIcon variant="light" size="sm" onClick={onReloadContent}>
+                            <ActionIcon variant="light" size="sm" onClick={onReloadContent} disabled={!hasFiles}>
                                 <IconRefresh size={16} />
+                            </ActionIcon>
+                        </Tooltip>
+                        <Tooltip label="Clear all selected files">
+                            <ActionIcon variant="light" color="red" size="sm" onClick={onClearAll} disabled={!hasFiles}>
+                                <IconTrash size={16} />
                             </ActionIcon>
                         </Tooltip>
                         <Tooltip label="Copy composed prompt to clipboard">
@@ -62,6 +72,7 @@ export const ContentComposer = ({
                                 variant="light"
                                 onClick={onCopyAll}
                                 leftSection={<IconCopy size={14} />}
+                                disabled={!hasFiles && !userPrompt && !selectedSystemPromptId}
                             >
                                 Copy All
                             </Button>

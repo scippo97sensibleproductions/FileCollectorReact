@@ -1,7 +1,7 @@
-import { ActionIcon, Box, Button, Group, LoadingOverlay, Stack, Text, TreeNodeData, Tooltip } from "@mantine/core";
+import { ActionIcon, Box, Button, Group, LoadingOverlay, Stack, Text, Tooltip } from "@mantine/core";
 import { createFileRoute } from '@tanstack/react-router';
 import { open } from '@tauri-apps/plugin-dialog';
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { BaseDirectory, DirEntry, readDir, readTextFile } from "@tauri-apps/plugin-fs";
 import { join } from "@tauri-apps/api/path";
 import { useDisclosure } from "@mantine/hooks";
@@ -13,10 +13,15 @@ export const Route = createFileRoute('/')({
     component: Index,
 })
 
-type DefinedTreeNode = {
+export type DefinedTreeNode = {
     label: string;
     value: string;
     children?: DefinedTreeNode[];
+};
+
+type FlatFileNode = {
+    label: string;
+    value: string;
 }
 
 export const getGitIgnoreItems = async (): Promise<GitIgnoreItem[]> => {
@@ -33,43 +38,53 @@ export const getGitIgnoreItems = async (): Promise<GitIgnoreItem[]> => {
 const getTreeNodesRecursive = async (path: string, relativePath: string, processedPatterns: ProcessedPattern[]): Promise<DefinedTreeNode[]> => {
     const entries: DirEntry[] = await readDir(path);
 
-    const nodePromises = entries
-        .map(async (entry): Promise<DefinedTreeNode | null> => {
-            if (!entry.name) return null;
+    const nodePromises = entries.map(async (entry): Promise<DefinedTreeNode | null> => {
+        if (!entry.name) return null;
 
-            const entryRelativePath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
-            const isIgnored = checkIgnore(processedPatterns, entryRelativePath);
-            if(isIgnored) return null;
+        const entryRelativePath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
+        if (checkIgnore(processedPatterns, entryRelativePath)) return null;
 
-            const fullPath = await join(path, entry.name);
+        const fullPath = await join(path, entry.name);
 
-            if (entry.isDirectory) {
-                const children = await getTreeNodesRecursive(fullPath, entryRelativePath, processedPatterns);
-                if (children.length === 0) return null;
-                return { label: entry.name, value: fullPath, children };
-            }
+        if (entry.isDirectory) {
+            const children = await getTreeNodesRecursive(fullPath, entryRelativePath, processedPatterns);
+            if (children.length === 0) return null;
+            return { label: entry.name, value: fullPath, children };
+        }
 
-            return { label: entry.name, value: fullPath };
-        });
+        return { label: entry.name, value: fullPath };
+    });
 
-    const resolvedNodes = await Promise.all(nodePromises);
-    const nodes = resolvedNodes.filter((node): node is DefinedTreeNode => node !== null);
+    const resolvedNodes = (await Promise.all(nodePromises)).filter((node): node is DefinedTreeNode => node !== null);
 
-    nodes.sort((a, b) => {
-        const aIsFolder = !!a.children;
-        const bIsFolder = !!b.children;
+    resolvedNodes.sort((a, b) => {
+        const aIsFolder = Array.isArray(a.children);
+        const bIsFolder = Array.isArray(b.children);
         if (aIsFolder !== bIsFolder) return aIsFolder ? -1 : 1;
         return a.label.localeCompare(b.label);
     });
 
-    return nodes;
+    return resolvedNodes;
 };
 
 function Index() {
     const [path, setPath] = useState<string | null>(null);
-    const [treeNodeData, setTreeNodeData] = useState<TreeNodeData[]>([]);
+    const [treeNodeData, setTreeNodeData] = useState<DefinedTreeNode[]>([]);
+    const [allFiles, setAllFiles] = useState<FlatFileNode[]>([]);
     const [visible, handlers] = useDisclosure(false);
     const [checkedItems, setCheckedItems] = useState<string[]>([]);
+
+    const getFlatFiles = (nodes: DefinedTreeNode[]): FlatFileNode[] => {
+        let files: FlatFileNode[] = [];
+        for (const node of nodes) {
+            if (node.children) {
+                files = files.concat(getFlatFiles(node.children));
+            } else {
+                files.push({ label: node.label, value: node.value });
+            }
+        }
+        return files;
+    };
 
     const loadDirectoryTree = async (directoryPath: string) => {
         handlers.open();
@@ -77,14 +92,19 @@ function Index() {
             setPath(directoryPath);
             setCheckedItems([]);
             setTreeNodeData([]);
+            setAllFiles([]);
 
             const gitignoreItems = await getGitIgnoreItems();
-            const processedPatterns = gitignoreItems
+            const patterns = gitignoreItems
                 .map(processPattern)
                 .filter((p): p is ProcessedPattern => p !== null);
 
-            const nodes = await getTreeNodesRecursive(directoryPath, '', processedPatterns);
+            const nodes = await getTreeNodesRecursive(directoryPath, '', patterns);
+            const flatFiles = getFlatFiles(nodes);
+            flatFiles.sort((a, b) => a.label.localeCompare(b.label));
+
             setTreeNodeData(nodes);
+            setAllFiles(flatFiles);
         } finally {
             handlers.close();
         }
@@ -103,6 +123,29 @@ function Index() {
         }
     };
 
+    const handleNodeToggle = useCallback((node: { value: string, children?: DefinedTreeNode[] }, isCurrentlyChecked: boolean) => {
+        const pathsToToggle = new Set<string>();
+
+        const collectPaths = (currentNode: { value: string, children?: DefinedTreeNode[] }) => {
+            pathsToToggle.add(currentNode.value);
+            if (currentNode.children) {
+                currentNode.children.forEach(collectPaths);
+            }
+        };
+
+        collectPaths(node);
+
+        setCheckedItems(prevCheckedItems => {
+            const currentCheckedSet = new Set(prevCheckedItems);
+            if (isCurrentlyChecked) {
+                pathsToToggle.forEach(p => currentCheckedSet.delete(p));
+            } else {
+                pathsToToggle.forEach(p => currentCheckedSet.add(p));
+            }
+            return Array.from(currentCheckedSet);
+        });
+    }, []);
+
     return (
         <Stack h="calc(100vh - var(--app-shell-padding, 1rem) * 2)" gap="md">
             <Box pos="relative">
@@ -117,14 +160,14 @@ function Index() {
                         <Button
                             variant="light"
                             onClick={handleSelectFolder}
-                            leftSection={<IconFolderOpen size={18}/>}
+                            leftSection={<IconFolderOpen size={18} />}
                         >
                             Select Folder
                         </Button>
                     </Tooltip>
                     <Tooltip label="Reload file list from disk">
                         <ActionIcon variant="light" onClick={handleReloadTree} disabled={!path}>
-                            <IconRefresh size={18}/>
+                            <IconRefresh size={18} />
                         </ActionIcon>
                     </Tooltip>
                     {path && <Text size="sm" truncate="end">Selected: <Text span c="dimmed">{path}</Text></Text>}
@@ -132,7 +175,13 @@ function Index() {
             </Box>
 
             <Box style={{ flex: 1, minHeight: 0 }}>
-                <FileManager data={treeNodeData} checkedItems={checkedItems} setCheckedItems={setCheckedItems} />
+                <FileManager
+                    data={treeNodeData}
+                    allFiles={allFiles}
+                    checkedItems={checkedItems}
+                    setCheckedItems={setCheckedItems}
+                    onNodeToggle={handleNodeToggle}
+                />
             </Box>
         </Stack>
     );

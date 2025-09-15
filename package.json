@@ -21,14 +21,15 @@
     "@tauri-apps/plugin-dialog": "^2.4.0",
     "@tauri-apps/plugin-fs": "^2.4.2",
     "@tauri-apps/plugin-opener": "^2",
-    "@types/react-syntax-highlighter": "^15.5.13",
+    "prismjs": "^1.30.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-syntax-highlighter": "^15.6.6"
+    "react-window": "^2.1.0"
   },
   "devDependencies": {
     "@tanstack/router-plugin": "^1.131.36",
     "@tauri-apps/cli": "^2",
+    "@types/prismjs": "^1.26.5",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.2",

@@ -1,0 +1,19 @@
+.line-numbers pre {
+    color: var(--mantine-color-gray-0);
+    background: var(--mantine-color-dark-7) !important;
+    border: none;
+    padding-left: 3.8em !important;
+    margin: 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.line-numbers code, .line-numbers pre {
+    line-height: 1.5;
+}
+
+.line-numbers .line-numbers-rows {
+    border-right: 1px solid var(--mantine-color-dark-4) !important;
+}
