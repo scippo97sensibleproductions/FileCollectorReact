@@ -94,7 +94,15 @@ export const FileTextRenderer = ({ data, uncheckItem, onClearAll }: FileTextRend
                 });
 
                 const newFiles = await Promise.all(filePromises);
-                newFiles.sort((a, b) => (b.tokenCount ?? 0) - (a.tokenCount ?? 0));
+                newFiles.sort((a, b) => {
+                    const aHasError = !!a.error;
+                    const bHasError = !!b.error;
+                    if (aHasError !== bHasError) {
+                        return aHasError ? -1 : 1; // Errored files come first
+                    }
+                    // Otherwise, sort by token count descending
+                    return (b.tokenCount ?? 0) - (a.tokenCount ?? 0);
+                });
                 setFiles(newFiles);
 
                 const dataPathSet = new Set(data);
