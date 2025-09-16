@@ -185,6 +185,7 @@ function Index() {
                     checkedItems={checkedItems}
                     setCheckedItems={setCheckedItems}
                     onNodeToggle={handleNodeToggle}
+                    path={path}
                 />
             </Box>
         </Stack>

@@ -5,6 +5,7 @@ import { FileTextRenderer } from "./FileTextRenderer.tsx";
 import { FileSearch } from "./FileSearch.tsx";
 import { VirtualizedFileTree } from "./VirtualizedFileTree.tsx";
 import type { DefinedTreeNode } from "../routes";
+import { ContextManager } from "./ContextManager.tsx";
 
 interface FileManagerProps {
     data: DefinedTreeNode[];
@@ -12,16 +13,21 @@ interface FileManagerProps {
     checkedItems: string[];
     setCheckedItems: React.Dispatch<React.SetStateAction<string[]>>;
     onNodeToggle: (node: DefinedTreeNode) => void;
+    path: string | null;
 }
 
-export const FileManager = ({ data, allFiles, checkedItems, setCheckedItems, onNodeToggle }: FileManagerProps) => {
+export const FileManager = ({ data, allFiles, checkedItems, setCheckedItems, onNodeToggle, path }: FileManagerProps) => {
 
-    const handleAddItem = (path: string) => {
-        setCheckedItems(prevItems => Array.from(new Set(prevItems).add(path)));
+    const handleAddItem = (filePath: string) => {
+        setCheckedItems(prevItems => Array.from(new Set(prevItems).add(filePath)));
     };
 
-    const handleRemoveItem = (path: string) => {
-        setCheckedItems(prevItems => prevItems.filter(p => p !== path));
+    const handleRemoveItem = (filePath: string) => {
+        setCheckedItems(prevItems => prevItems.filter(p => p !== filePath));
+    };
+
+    const handleLoadContext = (pathsToLoad: string[]) => {
+        setCheckedItems(pathsToLoad);
     };
 
     const checkedFiles = useMemo(() => {
@@ -31,8 +37,8 @@ export const FileManager = ({ data, allFiles, checkedItems, setCheckedItems, onN
 
     return (
         <Flex gap="md" h="100%">
-            <Flex style={{ flex: '0 0 380px', minWidth: '300px' }}>
-                <Paper withBorder shadow="sm" p="md" style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+            <Flex style={{ flex: '0 0 380px', minWidth: '300px' }} direction="column" gap="md">
+                <Paper withBorder shadow="sm" p="md" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
                     <Tabs defaultValue="files" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                         <Tabs.List>
                             <Tabs.Tab value="files" leftSection={<IconFiles size={16} />}>
@@ -59,6 +65,13 @@ export const FileManager = ({ data, allFiles, checkedItems, setCheckedItems, onN
                             />
                         </Tabs.Panel>
                     </Tabs>
+                </Paper>
+                <Paper withBorder shadow="sm" p="md">
+                    <ContextManager
+                        currentPath={path}
+                        selectedFilePaths={checkedItems}
+                        onLoadContext={handleLoadContext}
+                    />
                 </Paper>
             </Flex>
             <Flex style={{ flex: 1, minWidth: 0 }}>
