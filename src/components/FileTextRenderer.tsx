@@ -1,7 +1,7 @@
-import { Flex, Center, Loader, Text, Stack } from "@mantine/core";
-import { useEffect, useMemo, useState } from "react";
+import { Flex, LoadingOverlay } from "@mantine/core";
+import { useEffect, useState, useRef } from "react";
 import { BaseDirectory, readTextFile } from "@tauri-apps/plugin-fs";
-import { IconCheck, IconInfoCircle } from '@tabler/icons-react';
+import { IconCheck } from '@tabler/icons-react';
 import { getLanguage } from "../helpers/fileTypeManager.ts";
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { notifications } from "@mantine/notifications";
@@ -9,10 +9,12 @@ import type { FileInfo } from "../models/FileInfo.ts";
 import { ContentComposer } from "./ContentComposer.tsx";
 import { FileViewer } from "./FileViewer.tsx";
 import { estimateTokens } from "../helpers/TokenCounter.ts";
+import { readTextFileWithDetectedEncoding } from "../helpers/EncodingManager.ts";
 
 const PROMPTS_PATH = import.meta.env.VITE_SYSTEM_PROMPTS_PATH || 'FileCollector/system_prompts.json';
 const BASE_DIR = (Number(import.meta.env.VITE_FILE_BASE_PATH) || 21) as BaseDirectory;
 const MAX_FILE_SIZE = 200_000;
+const LOADER_DELAY_MS = 300;
 
 interface FileTextRendererProps {
     data: string[];
@@ -23,12 +25,14 @@ interface FileTextRendererProps {
 export const FileTextRenderer = ({ data, uncheckItem, onClearAll }: FileTextRendererProps) => {
     const [files, setFiles] = useState<FileInfo[]>([]);
     const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
 
     const [systemPrompts, setSystemPrompts] = useState<SystemPromptItem[]>([]);
     const [selectedSystemPromptId, setSelectedSystemPromptId] = useState<string | null>(null);
     const [userPrompt, setUserPrompt] = useState('');
     const [reloadNonce, setReloadNonce] = useState(0);
+
+    const loadingTimerRef = useRef<number | null>(null);
 
     const handleReloadContent = () => setReloadNonce(n => n + 1);
 
@@ -48,70 +52,86 @@ export const FileTextRenderer = ({ data, uncheckItem, onClearAll }: FileTextRend
     }, []);
 
     useEffect(() => {
+        if (loadingTimerRef.current) {
+            clearTimeout(loadingTimerRef.current);
+        }
+
         const syncFiles = async () => {
             if (data.length === 0) {
-                setFiles([]);
-                setSelectedFilePath(null);
+                if (files.length > 0) {
+                    setFiles([]);
+                    setSelectedFilePath(null);
+                }
                 setIsLoading(false);
                 return;
             }
 
-            setIsLoading(true);
+            loadingTimerRef.current = window.setTimeout(() => {
+                setIsLoading(true);
+            }, LOADER_DELAY_MS);
 
-            const filePromises = data.map(async (path): Promise<FileInfo> => {
-                try {
-                    const content = await readTextFile(path);
-                    if (content.length > MAX_FILE_SIZE) {
+            try {
+                const filePromises = data.map(async (path): Promise<FileInfo> => {
+                    try {
+                        const content = await readTextFileWithDetectedEncoding(path);
+                        if (content.length > MAX_FILE_SIZE) {
+                            return {
+                                path,
+                                error: `File is too large (over ${MAX_FILE_SIZE / 1000}k characters).`,
+                            };
+                        }
                         return {
                             path,
-                            error: `File is too large (over ${MAX_FILE_SIZE / 1000}k characters).`,
+                            language: getLanguage(path),
+                            tokenCount: estimateTokens(content),
+                        };
+                    } catch (e) {
+                        return {
+                            path,
+                            error: `Failed to read file: ${e instanceof Error ? e.message : String(e)}`,
                         };
                     }
-                    return {
-                        path,
-                        language: getLanguage(path),
-                        tokenCount: estimateTokens(content),
-                    };
-                } catch (e) {
-                    return {
-                        path,
-                        error: `Failed to read file: ${e instanceof Error ? e.message : String(e)}`,
-                    };
+                });
+
+                const newFiles = await Promise.all(filePromises);
+                newFiles.sort((a, b) => (b.tokenCount ?? 0) - (a.tokenCount ?? 0));
+                setFiles(newFiles);
+
+                const dataPathSet = new Set(data);
+                if (!selectedFilePath || !dataPathSet.has(selectedFilePath)) {
+                    setSelectedFilePath(newFiles.find(f => !f.error)?.path || null);
                 }
-            });
-
-            const newFiles = await Promise.all(filePromises);
-            newFiles.sort((a, b) => (b.tokenCount ?? 0) - (a.tokenCount ?? 0));
-            setFiles(newFiles);
-
-            const dataPathSet = new Set(data);
-            if (!selectedFilePath || !dataPathSet.has(selectedFilePath)) {
-                setSelectedFilePath(newFiles.find(f => !f.error)?.path || null);
+            } finally {
+                if (loadingTimerRef.current) {
+                    clearTimeout(loadingTimerRef.current);
+                }
+                setIsLoading(false);
             }
-
-            setIsLoading(false);
         };
 
         syncFiles();
+
+        return () => {
+            if (loadingTimerRef.current) {
+                clearTimeout(loadingTimerRef.current);
+            }
+        };
     }, [data, reloadNonce]);
 
-    const selectedFile = useMemo(() => files.find(f => f.path === selectedFilePath) || null, [files, selectedFilePath]);
+    const selectedFile = files.find(f => f.path === selectedFilePath) || null;
 
     const handleFileSelect = (file: FileInfo | null) => {
         setSelectedFilePath(file?.path ?? null);
     };
 
-    const totalTokens = useMemo(() => {
-        const selectedPrompt = systemPrompts.find(p => p.id === selectedSystemPromptId);
-        const systemPromptTokens = selectedPrompt ? estimateTokens(selectedPrompt.content) : 0;
-        const userPromptTokens = estimateTokens(userPrompt);
-        const fileTokens = files.reduce((acc, file) => acc + (file.tokenCount || 0), 0);
-        return systemPromptTokens + userPromptTokens + fileTokens;
-    }, [files, systemPrompts, selectedSystemPromptId, userPrompt]);
+    const totalTokens = files.reduce((acc, file) => acc + (file.tokenCount || 0), 0);
+    const selectedPrompt = systemPrompts.find(p => p.id === selectedSystemPromptId);
+    const systemPromptTokens = selectedPrompt ? estimateTokens(selectedPrompt.content) : 0;
+    const userPromptTokens = estimateTokens(userPrompt);
+    const composedTotalTokens = systemPromptTokens + userPromptTokens + totalTokens;
 
     const handleCopyAll = async () => {
         const filesToCopy = files.filter(file => !file.error);
-        const selectedPrompt = systemPrompts.find(p => p.id === selectedSystemPromptId);
 
         if (filesToCopy.length === 0 && !userPrompt && !selectedPrompt) {
             notifications.show({
@@ -128,7 +148,7 @@ export const FileTextRenderer = ({ data, uncheckItem, onClearAll }: FileTextRend
             const fileContents = await Promise.all(
                 filesToCopy.map(async (file) => {
                     try {
-                        const content = await readTextFile(file.path);
+                        const content = await readTextFileWithDetectedEncoding(file.path);
                         return `FILE PATH: ${file.path}\n\nCONTENT:\n\`\`\`${file.language || ''}\n${content}\n\`\`\``;
                     } catch {
                         return `FILE PATH: ${file.path}\n\nCONTENT:\n\`\`\`\n--- ERROR READING FILE ---\n\`\`\``;
@@ -145,7 +165,7 @@ export const FileTextRenderer = ({ data, uncheckItem, onClearAll }: FileTextRend
             await writeText(formattedContent);
             notifications.show({
                 title: 'Content Copied',
-                message: `Successfully copied ~${totalTokens.toLocaleString()} tokens to clipboard.`,
+                message: `Successfully copied ~${composedTotalTokens.toLocaleString()} tokens to clipboard.`,
                 color: 'green',
                 icon: <IconCheck size={18} />,
             });
@@ -158,16 +178,9 @@ export const FileTextRenderer = ({ data, uncheckItem, onClearAll }: FileTextRend
         }
     };
 
-    if (data.length === 0 && !isLoading) {
-        return <Center h="100%"><Stack align="center"><IconInfoCircle size={48} stroke={1.5} color="var(--mantine-color-gray-5)" /><Text c="dimmed">Select files from the tree to begin.</Text></Stack></Center>;
-    }
-
-    if (isLoading) {
-        return <Center h="100%"><Loader /></Center>;
-    }
-
     return (
-        <Flex gap="md" h="100%">
+        <Flex gap="md" h="100%" pos="relative">
+            <LoadingOverlay visible={isLoading} overlayProps={{ radius: 'sm', blur: 2 }} />
             <ContentComposer
                 files={files}
                 systemPrompts={systemPrompts}
@@ -181,9 +194,9 @@ export const FileTextRenderer = ({ data, uncheckItem, onClearAll }: FileTextRend
                 onClearAll={onClearAll}
                 setUserPrompt={setUserPrompt}
                 setSelectedSystemPromptId={setSelectedSystemPromptId}
-                totalTokens={totalTokens}
+                totalTokens={composedTotalTokens}
             />
-            <FileViewer selectedFile={selectedFile} />
+            <FileViewer selectedFile={selectedFile} isEmpty={data.length === 0} />
         </Flex>
     );
 };

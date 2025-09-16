@@ -2,6 +2,7 @@ import { useState, useMemo, memo, useCallback } from 'react';
 import { Box, Checkbox, Group, Stack, Text, Title, Center } from '@mantine/core';
 import { List, type RowComponentProps } from 'react-window';
 import { IconCaretDownFilled, IconCaretRightFilled, IconFolderOff } from '@tabler/icons-react';
+import { useElementSize } from '@mantine/hooks';
 import { FileIcon } from './FileIcon';
 import type { DefinedTreeNode } from '../routes';
 
@@ -96,6 +97,7 @@ const NodeRow = memo(({ index, style, ariaAttributes, ...props }: RowComponentPr
 
 export const VirtualizedFileTree = ({ data, checkedItems, onNodeToggle }: VirtualizedFileTreeProps) => {
     const [expandedIds, setExpandedIds] = useState(new Set<string>());
+    const { ref: containerRef } = useElementSize();
 
     const toggleExpand = useCallback((id: string) => {
         setExpandedIds(currentIds => {
@@ -156,7 +158,7 @@ export const VirtualizedFileTree = ({ data, checkedItems, onNodeToggle }: Virtua
     return (
         <Stack h="100%" gap="sm">
             <Title order={5}>Project Files</Title>
-            <Box style={{ flex: 1 }}>
+            <Box style={{ flex: 1, minHeight: 0 }} ref={containerRef}>
                 {data.length > 0 ? (
                     <List
                         rowCount={flatNodes.length}
