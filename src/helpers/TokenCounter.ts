@@ -6,5 +6,5 @@ export function estimateTokens(text: string): number {
     const tokenRegex = /[\w]+|[^\s\w]/g;
     const tokens = text.match(tokenRegex);
 
-    return (tokens?.length ?? 0) * 1.39;
+    return Math.round((tokens?.length ?? 0) * 1.39);
 }

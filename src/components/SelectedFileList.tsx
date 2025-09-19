@@ -1,4 +1,4 @@
-import { ActionIcon, Box, NavLink, Text, Tooltip, useMantineTheme, useMantineColorScheme, rgba } from '@mantine/core';
+import { ActionIcon, Box, NavLink, Text, Tooltip, useMantineColorScheme, useMantineTheme, rgba } from '@mantine/core';
 import { IconX } from '@tabler/icons-react';
 import { memo, useMemo } from 'react';
 import { List, type RowComponentProps } from 'react-window';
@@ -13,7 +13,6 @@ interface SelectedFileListProps {
     onUncheckItem: (path: string) => void;
 }
 
-// Define props passed to each row via `rowProps`
 interface FileRowProps {
     files: FileInfo[];
     selectedFile: FileInfo | null;
@@ -21,7 +20,6 @@ interface FileRowProps {
     onUncheckItem: (path: string) => void;
 }
 
-// Memoized row component for performance.
 const FileRow = memo(({ index, style, ...props }: RowComponentProps<FileRowProps>) => {
     const theme = useMantineTheme();
     const { colorScheme } = useMantineColorScheme();
@@ -68,15 +66,14 @@ const FileRow = memo(({ index, style, ...props }: RowComponentProps<FileRowProps
     );
 });
 
-export const SelectedFileList = ({
-                                     files,
-                                     selectedFile,
-                                     onFileSelect,
-                                     onUncheckItem,
-                                 }: SelectedFileListProps) => {
+export const SelectedFileList = memo(({
+                                          files,
+                                          selectedFile,
+                                          onFileSelect,
+                                          onUncheckItem,
+                                      }: SelectedFileListProps) => {
     const { ref, width, height } = useElementSize();
 
-    // Memoize rowProps to prevent the List from re-rendering unnecessarily.
     const rowProps = useMemo(() => ({
         files,
         selectedFile,
@@ -91,7 +88,7 @@ export const SelectedFileList = ({
                 {height > 0 && width > 0 && files.length > 0 && (
                     <List
                         rowCount={files.length}
-                        rowHeight={52} // Height for each NavLink item
+                        rowHeight={52}
                         rowComponent={FileRow}
                         rowProps={rowProps}
                     />
@@ -99,4 +96,4 @@ export const SelectedFileList = ({
             </Box>
         </Box>
     );
-};
+});

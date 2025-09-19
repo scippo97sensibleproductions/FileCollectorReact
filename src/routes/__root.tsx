@@ -1,19 +1,32 @@
-import { AppShell, Box, Stack } from "@mantine/core"
+import { AppShell, Box, Burger, Group, Stack, Title } from "@mantine/core"
 import { createRootRoute, Outlet } from '@tanstack/react-router'
 import { ThemeToggle } from "../layout/ThemeToggle.tsx";
 import { NavMenu } from "../layout/NavMenu.tsx";
+import { useDisclosure } from "@mantine/hooks";
+import { IconCode } from "@tabler/icons-react";
 
 const RootLayout = () => {
+    const [opened, { toggle, close }] = useDisclosure();
+
     return (
         <AppShell
             padding="md"
-            navbar={{ width: 200, breakpoint: 'sm' }}
+            header={{ height: 60 }}
+            navbar={{ width: 200, breakpoint: 'sm', collapsed: { mobile: !opened } }}
             layout="alt"
         >
+            <AppShell.Header>
+                <Group h="100%" px="md">
+                    <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+                    <IconCode />
+                    <Title order={4}>File Collector</Title>
+                </Group>
+            </AppShell.Header>
+
             <AppShell.Navbar p="md">
                 <Stack justify="space-between" h="100%">
                     <Box>
-                        <NavMenu />
+                        <NavMenu onNavigate={close} />
                     </Box>
                     <ThemeToggle />
                 </Stack>

@@ -65,9 +65,18 @@ export const GitIgnoreManager = () => {
                 const content = await readTextFile(GITIGNORE_PATH, { baseDir: BASE_DIR });
                 const data = content ? JSON.parse(content) : [];
                 if (!Array.isArray(data)) {
-                    throw new Error('Invalid data format in gitignores.json. Expected an array.');
+                    const errorMessage = 'Invalid data format in gitignores.json. Expected an array.';
+                    setError(`Failed to load or parse gitignores.json: ${errorMessage}`);
+                    notifications.show({
+                        title: 'Loading Error',
+                        message: 'Could not load the gitignore file due to invalid content.',
+                        color: 'red',
+                        icon: <IconAlertCircle />,
+                    });
+                    setItems([]);
+                } else {
+                    setItems(data);
                 }
-                setItems(data);
             }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -111,8 +120,8 @@ export const GitIgnoreManager = () => {
 
     const handleAddItem = async () => {
         if (!newPattern.trim()) return;
-        await saveGitIgnoreItems([...items, { pattern: newPattern }]);
         const isNewPattern = !items.some(item => item.pattern === newPattern.trim());
+        await saveGitIgnoreItems([...items, { pattern: newPattern }]);
 
         if (isNewPattern) {
             notifications.show({
@@ -168,9 +177,9 @@ export const GitIgnoreManager = () => {
                 title: 'Import .gitignore file',
             });
 
-            if (!selectedPath) return;
+            if (typeof selectedPath !== 'string') return;
 
-            const content = await readTextFile(selectedPath as string);
+            const content = await readTextFile(selectedPath);
             const newPatterns = content
                 .split('\n')
                 .map((line) => line.trim())
@@ -237,13 +246,12 @@ export const GitIgnoreManager = () => {
                 </Group>
 
                 <Paper shadow="sm" p="md" withBorder>
-                    <Group>
+                    <Stack gap="md" align="stretch" justify="flex-start">
                         <TextInput
                             placeholder="e.g., node_modules/"
                             value={newPattern}
                             onChange={(e) => setNewPattern(e.currentTarget.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
-                            style={{ flex: 1 }}
                             aria-label="New gitignore pattern"
                         />
                         <Button
@@ -253,7 +261,7 @@ export const GitIgnoreManager = () => {
                         >
                             Add Pattern
                         </Button>
-                    </Group>
+                    </Stack>
                 </Paper>
 
                 <Paper shadow="sm" withBorder style={{ flex: 1 }}>
@@ -285,7 +293,7 @@ export const GitIgnoreManager = () => {
                                             </Group>
                                         ) : (
                                             <Group justify="space-between">
-                                                <Text ff="monospace" fz="sm">{item.pattern}</Text>
+                                                <Text ff="monospace" fz="sm" truncate="end">{item.pattern}</Text>
                                                 <Group gap="xs">
                                                     <Tooltip label="Edit">
                                                         <ActionIcon variant="subtle" color="blue" onClick={() => setEditingState({ index, value: item.pattern })}><IconPencil size={18} /></ActionIcon>

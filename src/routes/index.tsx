@@ -1,4 +1,4 @@
-import { ActionIcon, Box, Button, Group, LoadingOverlay, Stack, Text, Tooltip } from "@mantine/core";
+import { Box } from "@mantine/core";
 import { createFileRoute } from '@tanstack/react-router';
 import { open } from '@tauri-apps/plugin-dialog';
 import { useCallback, useState } from "react";
@@ -7,7 +7,6 @@ import { join } from "@tauri-apps/api/path";
 import { useDisclosure } from "@mantine/hooks";
 import { checkIgnore, processPattern } from "../helpers/GitIgnoreParser.ts";
 import { FileManager } from "../components/FileManager.tsx";
-import { IconFolderOpen, IconRefresh } from "@tabler/icons-react";
 
 export const Route = createFileRoute('/')({
     component: Index,
@@ -78,7 +77,7 @@ function Index() {
     const [path, setPath] = useState<string | null>(null);
     const [treeNodeData, setTreeNodeData] = useState<DefinedTreeNode[]>([]);
     const [allFiles, setAllFiles] = useState<FlatFileNode[]>([]);
-    const [visible, handlers] = useDisclosure(false);
+    const [isLoading, loadingHandlers] = useDisclosure(false);
     const [checkedItems, setCheckedItems] = useState<string[]>([]);
 
     const getFlatFiles = (nodes: DefinedTreeNode[]): FlatFileNode[] => {
@@ -94,7 +93,7 @@ function Index() {
     };
 
     const loadDirectoryTree = async (directoryPath: string) => {
-        handlers.open();
+        loadingHandlers.open();
         try {
             setPath(directoryPath);
             setCheckedItems([]);
@@ -113,7 +112,7 @@ function Index() {
             setTreeNodeData(nodes);
             setAllFiles(flatFiles);
         } finally {
-            handlers.close();
+            loadingHandlers.close();
         }
     };
 
@@ -124,11 +123,11 @@ function Index() {
         }
     };
 
-    const handleReloadTree = async () => {
+    const handleReloadTree = useCallback(async () => {
         if (path) {
             await loadDirectoryTree(path);
         }
-    };
+    }, [path]);
 
     const handleNodeToggle = useCallback((node: DefinedTreeNode) => {
         const pathsToToggle = collectFilePaths(node);
@@ -151,43 +150,18 @@ function Index() {
     }, [checkedItems]);
 
     return (
-        <Stack h="calc(100vh - var(--app-shell-padding, 1rem) * 2)" gap="md">
-            <Box pos="relative">
-                <LoadingOverlay
-                    visible={visible}
-                    zIndex={1000}
-                    overlayProps={{ radius: 'sm', blur: 2 }}
-                    loaderProps={{ children: <Text>Scanning directory...</Text> }}
-                />
-                <Group>
-                    <Tooltip label="Select a project folder to analyze">
-                        <Button
-                            variant="light"
-                            onClick={handleSelectFolder}
-                            leftSection={<IconFolderOpen size={18} />}
-                        >
-                            Select Folder
-                        </Button>
-                    </Tooltip>
-                    <Tooltip label="Reload file list from disk">
-                        <ActionIcon variant="light" onClick={handleReloadTree} disabled={!path}>
-                            <IconRefresh size={18} />
-                        </ActionIcon>
-                    </Tooltip>
-                    {path && <Text size="sm" truncate="end">Selected: <Text span c="dimmed">{path}</Text></Text>}
-                </Group>
-            </Box>
-
-            <Box style={{ flex: 1, minHeight: 0 }}>
-                <FileManager
-                    data={treeNodeData}
-                    allFiles={allFiles}
-                    checkedItems={checkedItems}
-                    setCheckedItems={setCheckedItems}
-                    onNodeToggle={handleNodeToggle}
-                    path={path}
-                />
-            </Box>
-        </Stack>
+        <Box h="100%">
+            <FileManager
+                data={treeNodeData}
+                allFiles={allFiles}
+                checkedItems={checkedItems}
+                setCheckedItems={setCheckedItems}
+                onNodeToggle={handleNodeToggle}
+                path={path}
+                isLoading={isLoading}
+                onSelectFolder={handleSelectFolder}
+                onReloadTree={handleReloadTree}
+            />
+        </Box>
     );
 }

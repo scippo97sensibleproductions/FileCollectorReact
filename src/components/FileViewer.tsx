@@ -166,7 +166,6 @@ export const FileViewer = ({ selectedFile, isEmpty }: FileViewerProps) => {
             withBorder
             h="100%"
             p={!isEmpty && selectedFile ? 'md' : undefined}
-            style={{ flex: 3 }}
         >
             {renderContent()}
         </Paper>

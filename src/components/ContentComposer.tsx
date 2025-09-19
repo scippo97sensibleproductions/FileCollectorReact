@@ -11,6 +11,7 @@ import {
     Tooltip,
 } from '@mantine/core';
 import { IconCopy, IconRefresh, IconTrash, IconX } from '@tabler/icons-react';
+import { memo, useEffect, useState } from 'react';
 import { SelectedFileList } from './SelectedFileList';
 import type { FileInfo } from "../models/FileInfo.ts";
 
@@ -30,22 +31,43 @@ interface ContentComposerProps {
     totalTokens: number;
 }
 
-export const ContentComposer = ({
-                                    files,
-                                    systemPrompts,
-                                    selectedFile,
-                                    userPrompt,
-                                    selectedSystemPromptId,
-                                    onFileSelect,
-                                    onUncheckItem,
-                                    onCopyAll,
-                                    onReloadContent,
-                                    onClearAll,
-                                    setUserPrompt,
-                                    setSelectedSystemPromptId,
-                                    totalTokens
-                                }: ContentComposerProps) => {
+export const ContentComposer = memo(({
+                                         files,
+                                         systemPrompts,
+                                         selectedFile,
+                                         userPrompt,
+                                         selectedSystemPromptId,
+                                         onFileSelect,
+                                         onUncheckItem,
+                                         onCopyAll,
+                                         onReloadContent,
+                                         onClearAll,
+                                         setUserPrompt,
+                                         setSelectedSystemPromptId,
+                                         totalTokens
+                                     }: ContentComposerProps) => {
     const hasFiles = files.length > 0;
+    // Local state to manage the textarea's value instantly.
+    const [inputValue, setInputValue] = useState(userPrompt);
+
+    // Debounce the update to the parent component's state.
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            if (userPrompt !== inputValue) {
+                setUserPrompt(inputValue);
+            }
+        }, 1000); // 1-second delay after user stops typing.
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [inputValue, userPrompt, setUserPrompt]);
+
+    // Sync local state if the parent's prop changes (e.g., from a "clear" button).
+    useEffect(() => {
+        setInputValue(userPrompt);
+    }, [userPrompt]);
+
 
     return (
         <Paper withBorder shadow="sm" p="md" h="100%">
@@ -99,15 +121,15 @@ export const ContentComposer = ({
                 <Textarea
                     label="User Prompt"
                     placeholder="Append a user prompt..."
-                    value={userPrompt}
-                    onChange={(e) => setUserPrompt(e.currentTarget.value)}
+                    value={inputValue} // Bind to local state for responsiveness.
+                    onChange={(e) => setInputValue(e.currentTarget.value)} // Update local state on every keystroke.
                     autosize
                     minRows={3}
                     maxRows={8}
                     rightSection={
-                        userPrompt ? (
+                        inputValue ? (
                             <ActionIcon
-                                onClick={() => setUserPrompt('')}
+                                onClick={() => setInputValue('')}
                                 variant="transparent"
                                 c="dimmed"
                                 title="Clear prompt"
@@ -121,4 +143,4 @@ export const ContentComposer = ({
             </Stack>
         </Paper>
     );
-};
+});

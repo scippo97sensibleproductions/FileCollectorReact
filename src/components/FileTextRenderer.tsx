@@ -1,5 +1,5 @@
 import { Flex, LoadingOverlay } from "@mantine/core";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { BaseDirectory, readTextFile } from "@tauri-apps/plugin-fs";
 import { IconCheck } from '@tabler/icons-react';
 import { getLanguage } from "../helpers/fileTypeManager.ts";
@@ -10,6 +10,7 @@ import { ContentComposer } from "./ContentComposer.tsx";
 import { FileViewer } from "./FileViewer.tsx";
 import { estimateTokens } from "../helpers/TokenCounter.ts";
 import { readTextFileWithDetectedEncoding } from "../helpers/EncodingManager.ts";
+import { useDebouncedValue } from "@mantine/hooks";
 
 const PROMPTS_PATH = import.meta.env.VITE_SYSTEM_PROMPTS_PATH || 'FileCollector/system_prompts.json';
 const BASE_DIR = (Number(import.meta.env.VITE_FILE_BASE_PATH) || 21) as BaseDirectory;
@@ -32,9 +33,12 @@ export const FileTextRenderer = ({ data, uncheckItem, onClearAll }: FileTextRend
     const [userPrompt, setUserPrompt] = useState('');
     const [reloadNonce, setReloadNonce] = useState(0);
 
+    const [debouncedUserPrompt] = useDebouncedValue(userPrompt, 1000);
+    const [composedTotalTokens, setComposedTotalTokens] = useState(0);
+
     const loadingTimerRef = useRef<number | null>(null);
 
-    const handleReloadContent = () => setReloadNonce(n => n + 1);
+    const handleReloadContent = useCallback(() => setReloadNonce(n => n + 1), []);
 
     useEffect(() => {
         const getSystemPrompts = async () => {
@@ -98,9 +102,8 @@ export const FileTextRenderer = ({ data, uncheckItem, onClearAll }: FileTextRend
                     const aHasError = !!a.error;
                     const bHasError = !!b.error;
                     if (aHasError !== bHasError) {
-                        return aHasError ? -1 : 1; // Errored files come first
+                        return aHasError ? -1 : 1;
                     }
-                    // Otherwise, sort by token count descending
                     return (b.tokenCount ?? 0) - (a.tokenCount ?? 0);
                 });
                 setFiles(newFiles);
@@ -128,18 +131,27 @@ export const FileTextRenderer = ({ data, uncheckItem, onClearAll }: FileTextRend
 
     const selectedFile = files.find(f => f.path === selectedFilePath) || null;
 
-    const handleFileSelect = (file: FileInfo | null) => {
+    const handleFileSelect = useCallback((file: FileInfo | null) => {
         setSelectedFilePath(file?.path ?? null);
-    };
+    }, []);
 
-    const totalTokens = files.reduce((acc, file) => acc + (file.tokenCount || 0), 0);
-    const selectedPrompt = systemPrompts.find(p => p.id === selectedSystemPromptId);
-    const systemPromptTokens = selectedPrompt ? estimateTokens(selectedPrompt.content) : 0;
-    const userPromptTokens = estimateTokens(userPrompt);
-    const composedTotalTokens = systemPromptTokens + userPromptTokens + totalTokens;
+    const fileTokens = useMemo(() =>
+        files.reduce((acc, file) => acc + (file.tokenCount || 0), 0), [files]);
 
-    const handleCopyAll = async () => {
+    const selectedPrompt = useMemo(() =>
+        systemPrompts.find(p => p.id === selectedSystemPromptId), [systemPrompts, selectedSystemPromptId]);
+
+    const systemPromptTokens = useMemo(() =>
+        selectedPrompt ? estimateTokens(selectedPrompt.content) : 0, [selectedPrompt]);
+
+    useEffect(() => {
+        const userPromptTokens = estimateTokens(debouncedUserPrompt);
+        setComposedTotalTokens(systemPromptTokens + userPromptTokens + fileTokens);
+    }, [debouncedUserPrompt, fileTokens, systemPromptTokens]);
+
+    const handleCopyAll = useCallback(async () => {
         const filesToCopy = files.filter(file => !file.error);
+        const systemPromptContent = selectedPrompt ? selectedPrompt.content : '';
 
         if (filesToCopy.length === 0 && !userPrompt && !selectedPrompt) {
             notifications.show({
@@ -151,8 +163,6 @@ export const FileTextRenderer = ({ data, uncheckItem, onClearAll }: FileTextRend
         }
 
         try {
-            const systemPromptContent = selectedPrompt ? selectedPrompt.content : '';
-
             const fileContents = await Promise.all(
                 filesToCopy.map(async (file) => {
                     try {
@@ -171,9 +181,11 @@ export const FileTextRenderer = ({ data, uncheckItem, onClearAll }: FileTextRend
             const formattedContent = contentParts.join('\n\n---\n\n');
 
             await writeText(formattedContent);
+
+            const currentTokens = systemPromptTokens + estimateTokens(userPrompt) + fileTokens;
             notifications.show({
                 title: 'Content Copied',
-                message: `Successfully copied ~${composedTotalTokens.toLocaleString()} tokens to clipboard.`,
+                message: `Successfully copied ~${currentTokens.toLocaleString()} tokens to clipboard.`,
                 color: 'green',
                 icon: <IconCheck size={18} />,
             });
@@ -184,7 +196,7 @@ export const FileTextRenderer = ({ data, uncheckItem, onClearAll }: FileTextRend
                 color: 'red',
             });
         }
-    };
+    }, [files, selectedPrompt, userPrompt, systemPromptTokens, fileTokens]);
 
     return (
         <Flex gap="md" h="100%" pos="relative">
