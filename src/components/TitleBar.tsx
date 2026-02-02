@@ -15,12 +15,10 @@ export const TitleBar = () => {
         let unlistenFn: (() => void) | null = null;
 
         const setupListener = async () => {
-            // Initial check
             if (isMounted) {
                 setIsMaximized(await appWindow.isMaximized());
             }
 
-            // Listen for resize events to detect OS snapping or manual resizing
             unlistenFn = await appWindow.listen('tauri://resize', async () => {
                 if (isMounted) {
                     setIsMaximized(await appWindow.isMaximized());
@@ -39,7 +37,6 @@ export const TitleBar = () => {
     const handleMinimize = () => appWindow.minimize();
     const handleMaximize = async () => {
         await appWindow.toggleMaximize();
-        // State will update via the resize listener, but we can optimistically flip it here too
         setIsMaximized(!isMaximized);
     };
     const handleClose = () => appWindow.close();
@@ -58,7 +55,7 @@ export const TitleBar = () => {
                 top: 0,
                 left: 0,
                 right: 0,
-                zIndex: 9999,
+                zIndex: 10000,
                 backgroundColor: bgColor,
                 borderBottom: `1px solid ${borderColor}`,
                 display: 'flex',
@@ -74,7 +71,6 @@ export const TitleBar = () => {
                 </Text>
             </Group>
 
-            {/* Window Controls */}
             <Group gap={0} h="100%">
                 <ActionIcon
                     c={iconColor}
